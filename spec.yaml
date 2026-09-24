@@ -723,18 +723,34 @@ workflow:
           df: ${{ workflow.commercial_events_filtered.return }}
           client: ${{ workflow.er_client.return }}
 
+      # dataframe_count (len(df)) is always well-defined, even on an empty
+      # dataframe (0) - this account has no recreational data at all, so
+      # without a never override any_is_empty_df would skip these counts,
+      # cascading via any_dependency_skipped into assemble_vessels_by_category
+      # and assemble_vessels_documented (both take all 3 counts as direct
+      # args), wiping out those two widgets entirely - including the real
+      # commercial fishing count. Confirmed live.
       - id: recreational_fishing_count
         task: dataframe_count
+        skipif:
+          conditions:
+            - never
         partial:
           df: ${{ workflow.recreational_fishing_vessels.return }}
 
       - id: recreational_tourism_count
         task: dataframe_count
+        skipif:
+          conditions:
+            - never
         partial:
           df: ${{ workflow.recreational_tourism_vessels.return }}
 
       - id: commercial_fishing_count
         task: dataframe_count
+        skipif:
+          conditions:
+            - never
         partial:
           df: ${{ workflow.commercial_fishing_vessels.return }}
 
