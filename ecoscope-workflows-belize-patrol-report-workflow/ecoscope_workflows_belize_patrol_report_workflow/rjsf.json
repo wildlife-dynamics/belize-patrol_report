@@ -272,9 +272,7 @@
           "ecoscope:advanced": false
         }
       },
-      "required": [
-        "var"
-      ],
+      "required": [],
       "type": "object",
       "title": "Patrol ID"
     },
