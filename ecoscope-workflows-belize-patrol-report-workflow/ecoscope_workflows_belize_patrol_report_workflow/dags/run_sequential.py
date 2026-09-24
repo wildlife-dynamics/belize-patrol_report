@@ -1400,23 +1400,6 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
-    download_attachments = (
-        task(download_event_attachments)
-        .validate()
-        .set_task_instance_id("download_attachments")
-        .handle_errors()
-        .with_tracing()
-        .partial(
-            client=er_client,
-            event_gdf=event_colormap,
-            output_dir=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
-            attachments_subdir="attachments",
-            use_index_as_id=False,
-            **(params.get("download_attachments") or {}),
-        )
-        .call()
-    )
-
     patrol_track_layer = (
         task(create_path_layer)
         .validate()
@@ -1528,6 +1511,23 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             title="Map of Activities Documented",
             data=activities_map_url,
             **(params.get("activities_map_sv") or {}),
+        )
+        .call()
+    )
+
+    download_attachments = (
+        task(download_event_attachments)
+        .validate()
+        .set_task_instance_id("download_attachments")
+        .handle_errors()
+        .with_tracing()
+        .partial(
+            client=er_client,
+            event_gdf=event_colormap,
+            output_dir=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            attachments_subdir="attachments",
+            use_index_as_id=False,
+            **(params.get("download_attachments") or {}),
         )
         .call()
     )

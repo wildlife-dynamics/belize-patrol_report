@@ -536,22 +536,7 @@
         }
       }
     },
-    "download_attachments": {
-      "additionalProperties": false,
-      "properties": {
-        "skip_download": {
-          "default": false,
-          "title": "Skip Photo Attachments",
-          "type": "boolean",
-          "description": "If True, skip downloading event photos, and the report will not include any images from inspections.",
-          "ecoscope:advanced": false
-        }
-      },
-      "required": [],
-      "type": "object",
-      "title": "Download Event Attachments"
-    },
-    "Map of Activities Documented": {
+    "Viewstate": {
       "type": "object",
       "description": "",
       "ecoscope:task_group": true,
@@ -590,6 +575,21 @@
           "title": ""
         }
       }
+    },
+    "download_attachments": {
+      "additionalProperties": false,
+      "properties": {
+        "skip_download": {
+          "default": false,
+          "title": "Skip Photo Attachments",
+          "type": "boolean",
+          "description": "If True, skip downloading event photos, and the report will not include any images from inspections.",
+          "ecoscope:advanced": false
+        }
+      },
+      "required": [],
+      "type": "object",
+      "title": "Download Event Attachments"
     },
     "Patrol Report": {
       "type": "object",
@@ -771,7 +771,7 @@
         ]
       }
     },
-    "Map of Activities Documented": {
+    "Viewstate": {
       "activities_view_state": {
         "ui:order": [
           "padding_fraction",
@@ -791,8 +791,8 @@
       "trajs",
       "Patrol Style",
       "Event Style",
+      "Viewstate",
       "download_attachments",
-      "Map of Activities Documented",
       "Patrol Report"
     ]
   },

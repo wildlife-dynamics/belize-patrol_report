@@ -75,8 +75,16 @@ get_events = create_func_magicmock(  # 🧪
 from ecoscope.platform.tasks.analysis import dataframe_count as dataframe_count
 from ecoscope.platform.tasks.io import persist_text as persist_text
 from ecoscope.platform.tasks.results import (
+    create_map_widget_single_view as create_map_widget_single_view,
+)
+from ecoscope.platform.tasks.results import create_path_layer as create_path_layer
+from ecoscope.platform.tasks.results import (
     create_plot_widget_single_view as create_plot_widget_single_view,
 )
+from ecoscope.platform.tasks.results import (
+    create_scatterplot_layer as create_scatterplot_layer,
+)
+from ecoscope.platform.tasks.results import draw_map as draw_map
 from ecoscope.platform.tasks.results import draw_table as draw_table
 from ecoscope.platform.tasks.skip import never as never
 from ecoscope.platform.tasks.transformation import (
@@ -107,6 +115,9 @@ from ecoscope_workflows_ext_belize.tasks import (
     filter_recreational_vessels_by_category as filter_recreational_vessels_by_category,
 )
 from ecoscope_workflows_ext_belize.tasks import (
+    fit_view_to_geodataframes as fit_view_to_geodataframes,
+)
+from ecoscope_workflows_ext_belize.tasks import (
     flatten_commercial_fishing_vessels as flatten_commercial_fishing_vessels,
 )
 from ecoscope_workflows_ext_belize.tasks import (
@@ -120,17 +131,6 @@ download_event_attachments = create_func_magicmock(  # 🧪
     anchor="ecoscope_workflows_ext_custom.tasks.io",  # 🧪
     func_name="download_event_attachments",  # 🧪
 )  # 🧪
-from ecoscope.platform.tasks.results import (
-    create_map_widget_single_view as create_map_widget_single_view,
-)
-from ecoscope.platform.tasks.results import create_path_layer as create_path_layer
-from ecoscope.platform.tasks.results import (
-    create_scatterplot_layer as create_scatterplot_layer,
-)
-from ecoscope.platform.tasks.results import draw_map as draw_map
-from ecoscope_workflows_ext_belize.tasks import (
-    fit_view_to_geodataframes as fit_view_to_geodataframes,
-)
 from ecoscope_workflows_ext_custom.tasks.io import html_to_png as html_to_png
 
 get_report_generated_by = create_func_magicmock(  # 🧪
@@ -1437,23 +1437,6 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
-    download_attachments = (
-        task(download_event_attachments)
-        # 🧪 validation omitted for mocked IO task (returns pre-loaded example data)
-        .set_task_instance_id("download_attachments")
-        .handle_errors()
-        .with_tracing()
-        .partial(
-            client=er_client,
-            event_gdf=event_colormap,
-            output_dir=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
-            attachments_subdir="attachments",
-            use_index_as_id=False,
-            **(params.get("download_attachments") or {}),
-        )
-        .call()
-    )
-
     patrol_track_layer = (
         task(create_path_layer)
         .validate()
@@ -1565,6 +1548,23 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             title="Map of Activities Documented",
             data=activities_map_url,
             **(params.get("activities_map_sv") or {}),
+        )
+        .call()
+    )
+
+    download_attachments = (
+        task(download_event_attachments)
+        # 🧪 validation omitted for mocked IO task (returns pre-loaded example data)
+        .set_task_instance_id("download_attachments")
+        .handle_errors()
+        .with_tracing()
+        .partial(
+            client=er_client,
+            event_gdf=event_colormap,
+            output_dir=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            attachments_subdir="attachments",
+            use_index_as_id=False,
+            **(params.get("download_attachments") or {}),
         )
         .call()
     )

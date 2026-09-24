@@ -463,20 +463,6 @@
       "type": "object",
       "title": ""
     },
-    "download_attachments": {
-      "additionalProperties": false,
-      "properties": {
-        "skip_download": {
-          "default": false,
-          "title": "Skip Download",
-          "type": "boolean",
-          "description": "If True, skip downloading attachments."
-        }
-      },
-      "required": [],
-      "type": "object",
-      "title": "Download Event Attachments"
-    },
     "activities_view_state": {
       "additionalProperties": false,
       "properties": {
@@ -509,6 +495,20 @@
       "type": "object",
       "required": [],
       "title": ""
+    },
+    "download_attachments": {
+      "additionalProperties": false,
+      "properties": {
+        "skip_download": {
+          "default": false,
+          "title": "Skip Download",
+          "type": "boolean",
+          "description": "If True, skip downloading attachments."
+        }
+      },
+      "required": [],
+      "type": "object",
+      "title": "Download Event Attachments"
     },
     "report_template_path": {
       "additionalProperties": false,
@@ -688,8 +688,8 @@
       "track_legend_title",
       "event_colormap",
       "event_legend_title",
-      "download_attachments",
       "activities_view_state",
+      "download_attachments",
       "report_template_path"
     ]
   },
