@@ -1,0 +1,65 @@
+# Real values confirmed live against the `belize` EarthRanger account
+# (sacdbelize.pamdas.org) - see PRD - Belize SWCMR.md.
+#
+# Time range: Feb 1, 2026 to Sep 22, 2026 - matches the source PDF's own
+# report start date, extended through the current date so there's real data
+# to run against (the PDF's exact Feb 2026 window has 0 patrols on this
+# account - confirmed in .scripts/explore_patrols_events.py).
+
+workflow_details:
+  name: Belize Patrol Report
+  description: ""
+
+er_client:
+  data_source:
+    name: belize
+
+time_range:
+  since: "2026-02-01T00:00:00.000Z"
+  until: "2026-09-22T00:00:00.000Z"
+
+base_maps:
+  base_maps:
+    - url: >-
+        https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}
+      opacity: 1
+    - url: >-
+        https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}
+      opacity: 0.5
+
+# Left blank - report on every patrol in Time Range. Set to a specific
+# patrol's serial number (e.g. "12") to scope the whole report (patrol tables,
+# map track, vessel/fisher tables and map events) to just that one patrol.
+patrol_id_filter:
+  var: ""
+
+report_template_path:
+  var: "/Users/zak/Documents/w-dynamics/belize-patrol_report/resources/templates/belize_patrol_report_template.docx"
+
+# Neither input_column_name nor colormap is hardcoded in spec.yaml's partial
+# (matching apn's own Patrol Style/Event Style convention) - both are real
+# user-configurable "Groupby"/"Palette" inputs in the generated form, this is
+# just their default/dev value.
+#
+# colormap explicitly overrides apply_qualitative_color_map's own tab20b
+# default (fine for charts, see that task's docstring) - tab20b's first color
+# is a very dark, near-black navy, and this account's data is dominated by a
+# single category on each layer (almost all patrols are "Boat Patrol"; only
+# "Commercial Fishing" events exist so far) - both land on that same near-black
+# index-0 color, reading as "the whole map is black" (confirmed live - see
+# session history). Dark2/Set1 both start with a vivid, clearly-not-black hue,
+# and using different palettes for the two layers avoids them coincidentally
+# landing on the same color again.
+track_colormap:
+  input_column_name: extra__patrol_type__display
+  colormap: Set1
+
+event_colormap:
+  input_column_name: event_type_display
+  colormap: Dark2
+
+track_legend_title:
+  var: "Patrol Type"
+
+event_legend_title:
+  var: "Event Type"
