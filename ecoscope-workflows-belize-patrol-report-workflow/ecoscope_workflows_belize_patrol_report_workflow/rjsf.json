@@ -265,15 +265,15 @@
       "additionalProperties": false,
       "properties": {
         "var": {
+          "default": "",
           "title": "Patrol Serial Number",
           "type": "string",
           "description": "Leave blank to include every patrol in the time range, or enter a specific patrol's serial number to scope the report to just that one.",
-          "default": "",
           "ecoscope:advanced": false
         }
       },
-      "required": [],
       "type": "object",
+      "required": [],
       "title": "Patrol ID"
     },
     "plot_palette": {

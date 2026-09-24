@@ -10,7 +10,6 @@ import os
 import warnings  # 🧪
 from typing import Any
 
-from ecoscope.platform.tasks.config import set_string_var as set_string_var
 from ecoscope.platform.tasks.config import set_workflow_details as set_workflow_details
 from ecoscope.platform.tasks.filter import (
     get_timezone_from_time_range as get_timezone_from_time_range,
@@ -19,7 +18,14 @@ from ecoscope.platform.tasks.filter import set_time_range as set_time_range
 from ecoscope.platform.tasks.groupby import set_groupers as set_groupers
 from ecoscope.platform.tasks.io import set_er_connection as set_er_connection
 from ecoscope.platform.tasks.results import set_base_maps as set_base_maps
+from ecoscope.platform.tasks.skip import (
+    any_dependency_skipped as any_dependency_skipped,
+)
+from ecoscope.platform.tasks.skip import any_is_empty_df as any_is_empty_df
 from ecoscope_workflows_ext_belize.tasks import set_color_palette as set_color_palette
+from ecoscope_workflows_ext_belize.tasks import (
+    set_optional_string_var as set_optional_string_var_1,
+)
 from wt_contracts import validate as _validate
 from wt_task import task
 from wt_task.testing import create_func_magicmock  # 🧪
@@ -60,19 +66,26 @@ get_events = create_func_magicmock(  # 🧪
     anchor="ecoscope.platform.tasks.io",  # 🧪
     func_name="get_events",  # 🧪
 )  # 🧪
+
 get_events = create_func_magicmock(  # 🧪
     anchor="ecoscope.platform.tasks.io",  # 🧪
     func_name="get_events",  # 🧪
 )  # 🧪
+
 get_events = create_func_magicmock(  # 🧪
     anchor="ecoscope.platform.tasks.io",  # 🧪
     func_name="get_events",  # 🧪
 )  # 🧪
+
 get_events = create_func_magicmock(  # 🧪
     anchor="ecoscope.platform.tasks.io",  # 🧪
     func_name="get_events",  # 🧪
 )  # 🧪
+from ecoscope.platform.tasks.analysis import (
+    dataframe_column_sum as dataframe_column_sum,
+)
 from ecoscope.platform.tasks.analysis import dataframe_count as dataframe_count
+from ecoscope.platform.tasks.config import set_string_var as set_string_var
 from ecoscope.platform.tasks.io import persist_text as persist_text
 from ecoscope.platform.tasks.results import (
     create_map_widget_single_view as create_map_widget_single_view,
@@ -83,6 +96,9 @@ from ecoscope.platform.tasks.results import (
 )
 from ecoscope.platform.tasks.results import (
     create_scatterplot_layer as create_scatterplot_layer,
+)
+from ecoscope.platform.tasks.results import (
+    create_single_value_widget_single_view as create_single_value_widget_single_view,
 )
 from ecoscope.platform.tasks.results import draw_map as draw_map
 from ecoscope.platform.tasks.results import draw_table as draw_table
@@ -104,6 +120,9 @@ from ecoscope_workflows_ext_belize.tasks import (
 )
 from ecoscope_workflows_ext_belize.tasks import (
     draw_bar_chart_colored as draw_bar_chart_colored,
+)
+from ecoscope_workflows_ext_belize.tasks import (
+    drop_skipped_layers as drop_skipped_layers,
 )
 from ecoscope_workflows_ext_belize.tasks import (
     explode_commercial_fishing_fishers as explode_commercial_fishing_fishers,
@@ -157,6 +176,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("workflow_details")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(**(params.get("workflow_details") or {}))
         .call()
     )
@@ -167,6 +193,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("er_client")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(**(params.get("er_client") or {}))
         .call()
     )
@@ -177,6 +210,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("time_range")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(time_format="%b %-d, %Y %-I:%M %p", **(params.get("time_range") or {}))
         .call()
     )
@@ -187,6 +227,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("get_timezone")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(time_range=time_range, **(params.get("get_timezone") or {}))
         .call()
     )
@@ -197,6 +244,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("base_maps")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(**(params.get("base_maps") or {}))
         .call()
     )
@@ -207,16 +261,30 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("groupers")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(groupers=[], **(params.get("groupers") or {}))
         .call()
     )
 
     patrol_id_filter = (
-        task(set_string_var)
+        task(set_optional_string_var_1)
         .validate()
         .set_task_instance_id("patrol_id_filter")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(**(params.get("patrol_id_filter") or {}))
         .call()
     )
@@ -227,6 +295,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("plot_palette")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(**(params.get("plot_palette") or {}))
         .call()
     )
@@ -237,6 +312,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("patrols")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             client=er_client,
             time_range=time_range,
@@ -256,6 +338,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("patrols_filtered")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             patrols_df=patrols,
             patrol_id=patrol_id_filter,
@@ -270,6 +359,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("patrol_linkage")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             patrols_df=patrols_filtered,
             time_range=time_range,
@@ -289,6 +385,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("patrol_observations")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             client=er_client,
             time_range=time_range,
@@ -308,6 +411,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("patrol_observations_filtered")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             df=patrol_observations,
             patrols_df=patrols_filtered,
@@ -323,6 +433,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("convert_patrol_obs_tz")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             df=patrol_observations_filtered,
             timezone=get_timezone,
@@ -338,6 +455,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("relocs")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             observations=convert_patrol_obs_tz,
             relocs_columns=[
@@ -364,6 +488,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("trajs")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(relocations=relocs, **(params.get("trajs") or {}))
         .call()
     )
@@ -374,6 +505,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("trajectory_stats_by_patrol")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             df=trajs,
             groupby_cols=["extra__patrol_id"],
@@ -407,6 +545,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("trajectory_stats")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             df=trajectory_stats_by_patrol,
             rename_columns={"extra__patrol_id": "patrol_id"},
@@ -425,6 +570,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("patrol_details_events")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             client=er_client,
             time_range=time_range,
@@ -457,6 +609,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("completion_log_events")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             client=er_client,
             time_range=time_range,
@@ -489,6 +648,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("recreational_vessel_events")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             client=er_client,
             time_range=time_range,
@@ -521,6 +687,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("commercial_fishing_events")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             client=er_client,
             time_range=time_range,
@@ -553,6 +726,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("recreational_events_filtered")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             events_df=recreational_vessel_events,
             patrol_linkage=patrol_linkage,
@@ -569,6 +749,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("commercial_events_filtered")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             events_df=commercial_fishing_events,
             patrol_linkage=patrol_linkage,
@@ -585,6 +772,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("patrol_table")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             client=er_client,
             patrols_df=patrols_filtered,
@@ -603,6 +797,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("patrol_effort_summary")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             df=patrol_table,
             groupby_cols=[],
@@ -644,45 +845,31 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
-    patrol_effort_summary_table = (
-        task(draw_table)
+    pes_patrols = (
+        task(dataframe_column_sum)
         .validate()
-        .set_task_instance_id("patrol_effort_summary_table")
+        .set_task_instance_id("pes_patrols")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
-            dataframe=patrol_effort_summary,
-            columns=None,
-            table_config={
-                "enable_sorting": False,
-                "enable_filtering": False,
-                "enable_download": True,
-                "hide_header": False,
-            },
-            **(params.get("patrol_effort_summary_table") or {}),
+            df=patrol_effort_summary,
+            column_name="Number of Patrols",
+            **(params.get("pes_patrols") or {}),
         )
         .call()
     )
 
-    patrol_effort_summary_html = (
-        task(persist_text)
+    pes_patrols_sv = (
+        task(create_single_value_widget_single_view)
         .validate()
-        .set_task_instance_id("patrol_effort_summary_html")
-        .handle_errors()
-        .with_tracing()
-        .partial(
-            text=patrol_effort_summary_table,
-            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
-            filename_suffix="patrol_effort_summary",
-            **(params.get("patrol_effort_summary_html") or {}),
-        )
-        .call()
-    )
-
-    patrol_effort_summary_sv = (
-        task(create_plot_widget_single_view)
-        .validate()
-        .set_task_instance_id("patrol_effort_summary_sv")
+        .set_task_instance_id("pes_patrols_sv")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -692,9 +879,178 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            title="Patrol Effort Summary",
-            data=patrol_effort_summary_html,
-            **(params.get("patrol_effort_summary_sv") or {}),
+            title="Number of Patrols",
+            decimal_places=0,
+            data=pes_patrols,
+            **(params.get("pes_patrols_sv") or {}),
+        )
+        .call()
+    )
+
+    pes_distance = (
+        task(dataframe_column_sum)
+        .validate()
+        .set_task_instance_id("pes_distance")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=patrol_effort_summary,
+            column_name="Distance (km)",
+            **(params.get("pes_distance") or {}),
+        )
+        .call()
+    )
+
+    pes_distance_sv = (
+        task(create_single_value_widget_single_view)
+        .validate()
+        .set_task_instance_id("pes_distance_sv")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Distance (km)",
+            decimal_places=2,
+            data=pes_distance,
+            **(params.get("pes_distance_sv") or {}),
+        )
+        .call()
+    )
+
+    pes_nights = (
+        task(dataframe_column_sum)
+        .validate()
+        .set_task_instance_id("pes_nights")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=patrol_effort_summary,
+            column_name="Number of Nights",
+            **(params.get("pes_nights") or {}),
+        )
+        .call()
+    )
+
+    pes_nights_sv = (
+        task(create_single_value_widget_single_view)
+        .validate()
+        .set_task_instance_id("pes_nights_sv")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Number of Nights",
+            decimal_places=0,
+            data=pes_nights,
+            **(params.get("pes_nights_sv") or {}),
+        )
+        .call()
+    )
+
+    pes_hours = (
+        task(dataframe_column_sum)
+        .validate()
+        .set_task_instance_id("pes_hours")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=patrol_effort_summary,
+            column_name="Number of Patrol Hours",
+            **(params.get("pes_hours") or {}),
+        )
+        .call()
+    )
+
+    pes_hours_sv = (
+        task(create_single_value_widget_single_view)
+        .validate()
+        .set_task_instance_id("pes_hours_sv")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Number of Patrol Hours",
+            decimal_places=2,
+            data=pes_hours,
+            **(params.get("pes_hours_sv") or {}),
+        )
+        .call()
+    )
+
+    pes_fuel = (
+        task(dataframe_column_sum)
+        .validate()
+        .set_task_instance_id("pes_fuel")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=patrol_effort_summary,
+            column_name="Fuel Used (gal)",
+            **(params.get("pes_fuel") or {}),
+        )
+        .call()
+    )
+
+    pes_fuel_sv = (
+        task(create_single_value_widget_single_view)
+        .validate()
+        .set_task_instance_id("pes_fuel_sv")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Fuel Used (gal)",
+            decimal_places=2,
+            data=pes_fuel,
+            **(params.get("pes_fuel_sv") or {}),
         )
         .call()
     )
@@ -705,6 +1061,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("staff_effort")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             df=patrol_table,
             groupby_cols=["leader"],
@@ -746,6 +1109,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("staff_effort_renamed")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             df=staff_effort,
             rename_columns={"leader": "Officer Name"},
@@ -764,6 +1134,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("staff_effort_table")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             dataframe=staff_effort_renamed,
             columns=None,
@@ -784,6 +1161,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("staff_effort_html")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             text=staff_effort_table,
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
@@ -819,6 +1203,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("patrols_by_mandate")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             df=patrol_table,
             groupby_cols=["mandate"],
@@ -842,6 +1233,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("patrols_by_mandate_chart")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             dataframe=patrols_by_mandate,
             category="mandate",
@@ -866,6 +1264,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("patrols_by_mandate_chart_html")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             text=patrols_by_mandate_chart,
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
@@ -901,6 +1306,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("recreational_fishing_vessels")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             df=recreational_events_filtered,
             category="fishing",
@@ -916,6 +1328,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("recreational_tourism_vessels")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             df=recreational_events_filtered,
             category="tourism",
@@ -931,6 +1350,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("commercial_fishing_vessels")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             df=commercial_events_filtered,
             client=er_client,
@@ -945,6 +1371,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("fishers_documented")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             df=commercial_events_filtered,
             client=er_client,
@@ -959,6 +1392,12 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("recreational_fishing_count")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             df=recreational_fishing_vessels,
             **(params.get("recreational_fishing_count") or {}),
@@ -972,6 +1411,12 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("recreational_tourism_count")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             df=recreational_tourism_vessels,
             **(params.get("recreational_tourism_count") or {}),
@@ -985,6 +1430,12 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("commercial_fishing_count")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             df=commercial_fishing_vessels,
             **(params.get("commercial_fishing_count") or {}),
@@ -998,6 +1449,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("vessels_documented")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             recreational_fishing_count=recreational_fishing_count,
             commercial_fishing_count=commercial_fishing_count,
@@ -1013,6 +1471,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("recreational_fishing_table")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             dataframe=recreational_fishing_vessels,
             columns=None,
@@ -1033,6 +1498,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("recreational_fishing_html")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             text=recreational_fishing_table,
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
@@ -1068,6 +1540,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("recreational_tourism_table")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             dataframe=recreational_tourism_vessels,
             columns=None,
@@ -1088,6 +1567,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("recreational_tourism_html")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             text=recreational_tourism_table,
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
@@ -1123,6 +1609,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("commercial_fishing_vessels_table")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             dataframe=commercial_fishing_vessels,
             columns=None,
@@ -1143,6 +1636,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("commercial_fishing_vessels_html")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             text=commercial_fishing_vessels_table,
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
@@ -1178,6 +1678,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("fishers_documented_table")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             dataframe=fishers_documented,
             columns=None,
@@ -1198,6 +1705,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("fishers_documented_html")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             text=fishers_documented_table,
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
@@ -1233,6 +1747,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("vessels_documented_table")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             dataframe=vessels_documented,
             columns=None,
@@ -1253,6 +1774,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("vessels_documented_html")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             text=vessels_documented_table,
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
@@ -1288,6 +1816,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("vessels_by_category")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             commercial_fishing_count=commercial_fishing_count,
             recreational_fishing_count=recreational_fishing_count,
@@ -1303,6 +1838,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("vessels_inspected_chart")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             dataframe=vessels_by_category,
             category="category",
@@ -1327,6 +1869,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("vessels_inspected_chart_html")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             text=vessels_inspected_chart,
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
@@ -1362,6 +1911,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("track_colormap")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(df=trajs, **(params.get("track_colormap") or {}))
         .call()
     )
@@ -1372,6 +1928,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("track_legend_title")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(**(params.get("track_legend_title") or {}))
         .call()
     )
@@ -1382,6 +1945,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("commercial_events_tagged")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             df=commercial_events_filtered,
             **(params.get("commercial_events_tagged") or {}),
@@ -1395,6 +1965,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("recreational_events_tagged")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             df=recreational_events_filtered,
             **(params.get("recreational_events_tagged") or {}),
@@ -1408,9 +1985,21 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("events_for_map")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             dfs=[commercial_events_tagged, recreational_events_tagged],
-            ensure_columns=[],
+            ensure_columns=[
+                "event_type_display",
+                "event_category_display",
+                "category",
+                "id",
+                "geometry",
+            ],
             reset_index=True,
             **(params.get("events_for_map") or {}),
         )
@@ -1423,6 +2012,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("event_colormap")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(df=events_for_map, **(params.get("event_colormap") or {}))
         .call()
     )
@@ -1433,6 +2029,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("event_legend_title")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(**(params.get("event_legend_title") or {}))
         .call()
     )
@@ -1443,6 +2046,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("patrol_track_layer")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             geodataframe=track_colormap,
             legend={
@@ -1468,6 +2078,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("event_layer")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             geodataframe=event_colormap,
             legend={
@@ -1483,15 +2100,40 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
+    activities_layers = (
+        task(drop_skipped_layers)
+        .validate()
+        .set_task_instance_id("activities_layers")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            layers=[patrol_track_layer, event_layer],
+            **(params.get("activities_layers") or {}),
+        )
+        .call()
+    )
+
     activities_view_state = (
         task(fit_view_to_geodataframes)
         .validate()
         .set_task_instance_id("activities_view_state")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
-            geo_layers=[patrol_track_layer, event_layer],
-            **(params.get("activities_view_state") or {}),
+            geo_layers=activities_layers, **(params.get("activities_view_state") or {})
         )
         .call()
     )
@@ -1502,8 +2144,15 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("activities_map")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
-            geo_layers=[patrol_track_layer, event_layer],
+            geo_layers=activities_layers,
             tile_layers=base_maps,
             static=False,
             title=None,
@@ -1522,6 +2171,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("activities_map_url")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             text=activities_map,
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
@@ -1558,6 +2214,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("download_attachments")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             client=er_client,
             event_gdf=event_colormap,
@@ -1575,6 +2238,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("activities_map_png")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             html_path=activities_map_url,
             output_dir=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
@@ -1590,6 +2260,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("patrols_by_mandate_png")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             html_path=patrols_by_mandate_chart_html,
             output_dir=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
@@ -1605,6 +2282,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("vessels_inspected_png")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             html_path=vessels_inspected_chart_html,
             output_dir=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
@@ -1620,6 +2304,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("report_template_path")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(**(params.get("report_template_path") or {}))
         .call()
     )
@@ -1630,6 +2321,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("generated_by")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(client=er_client, **(params.get("generated_by") or {}))
         .call()
     )
@@ -1674,10 +2372,21 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .set_task_instance_id("dashboard")
         .handle_errors()
         .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
         .partial(
             details=workflow_details,
             widgets=[
-                patrol_effort_summary_sv,
+                pes_patrols_sv,
+                pes_distance_sv,
+                pes_nights_sv,
+                pes_hours_sv,
+                pes_fuel_sv,
                 staff_effort_sv,
                 patrols_by_mandate_sv,
                 vessels_inspected_sv,
