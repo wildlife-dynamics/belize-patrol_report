@@ -28,6 +28,11 @@ rjsf-overrides:
     patrol_id_filter.properties.var.description: "Leave blank to include every patrol in the time range, or enter a specific patrol's serial number to scope the report to just that one."
     patrol_id_filter.properties.var.default: ""
     patrol_id_filter.properties.var.ecoscope:advanced: false
+    # set_string_var's own `var` has no default, so it's required by
+    # pydantic/jsonschema regardless of the .default override above (that's
+    # display-only) - the form blocked submission on a blank value. Clear it
+    # from required here instead of introducing a new task.
+    patrol_id_filter.required: []
 
     plot_palette.description: "Shared color palette for all report charts."
     plot_palette.properties.colormap.description: "Select a color palette for all charts. Use Set1, Set2, or Dark2 for a small number of categories (up to 8). Use tab20, tab20b, or tab20c when you have many categories (up to 20)."
