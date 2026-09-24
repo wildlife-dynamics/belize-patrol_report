@@ -87,9 +87,9 @@ rjsf-overrides:
     Event Style.properties.event_legend_title.properties.var.default: "Event Type"
     Event Style.properties.event_legend_title.properties.var.ecoscope:advanced: false
 
-    Map of Activities Documented.properties.activities_view_state.properties.padding_fraction.title: Padding Around Data
-    Map of Activities Documented.properties.activities_view_state.properties.outlier_trim_percent.title: Outlier Trim (%)
-    Map of Activities Documented.properties.activities_view_state.properties.max_zoom.title: Max Zoom
+    Viewstate.properties.activities_view_state.properties.padding_fraction.title: Padding Around Data
+    Viewstate.properties.activities_view_state.properties.outlier_trim_percent.title: Outlier Trim (%)
+    Viewstate.properties.activities_view_state.properties.max_zoom.title: Max Zoom
 
 workflow:
   - name: Workflow Details
@@ -900,24 +900,7 @@ workflow:
       - id: event_legend_title
         task: set_string_var
 
-  # Same pattern as ICMBio-patrol_analysis's own Download Event Attachments -
-  # loops every mapped event (commercial + recreational vessel inspections),
-  # fetches its attachments (e.g. inspection/catch photos), and saves them
-  # under output_dir/attachments/<event_id>/... skip_download stays
-  # user-configurable (a period with lots of photographed inspections can
-  # mean a slow download; skipping is a real, common choice, not just an
-  # edge case).
-  - name: Download Event Attachments
-    id: download_attachments
-    task: download_event_attachments
-    partial:
-      client: ${{ workflow.er_client.return }}
-      event_gdf: ${{ workflow.event_colormap.return }}
-      output_dir: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
-      attachments_subdir: attachments
-      use_index_as_id: false
-
-  - title: Map of Activities Documented
+  - title: Viewstate
     type: task-group
     description: ""
     tasks:
@@ -1011,6 +994,23 @@ workflow:
         partial:
           title: "Map of Activities Documented"
           data: ${{ workflow.activities_map_url.return }}
+
+  # Same pattern as ICMBio-patrol_analysis's own Download Event Attachments -
+  # loops every mapped event (commercial + recreational vessel inspections),
+  # fetches its attachments (e.g. inspection/catch photos), and saves them
+  # under output_dir/attachments/<event_id>/... skip_download stays
+  # user-configurable (a period with lots of photographed inspections can
+  # mean a slow download; skipping is a real, common choice, not just an
+  # edge case).
+  - name: Download Event Attachments
+    id: download_attachments
+    task: download_event_attachments
+    partial:
+      client: ${{ workflow.er_client.return }}
+      event_gdf: ${{ workflow.event_colormap.return }}
+      output_dir: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      attachments_subdir: attachments
+      use_index_as_id: false
 
   # Same html_to_png config as APN-patrol_event: only full_page is set,
   # everything else (width/height/device_scale_factor/timeout/
