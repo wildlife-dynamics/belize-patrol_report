@@ -1,8 +1,8 @@
 # Belize Patrol Report
 
-Belize Fisheries Department — EarthRanger monthly patrol & vessel monitoring report, replicating the department's existing SMART Monthly Report format, for all of the department's protected areas on the shared `belize` EarthRanger account (`https://sacdbelize.pamdas.org`), not just one site.
+Belize Fisheries Department — EarthRanger monthly patrol & vessel monitoring report, covering all of the department's protected areas on the shared `belize` EarthRanger account (`https://sacdbelize.pamdas.org`), not just one site. Patrol activity spans multiple sites (patrol titles reference Corozal Bay, Shipstern, New River, and others), so the workflow is site-general rather than scoped to one protected area.
 
-`SWCMR_Report_000054.pdf` (South Water Caye Marine Reserve, titled "SMART Monthly Report" on the PDF itself) was only the **example** used to work out the target format and field mapping — this workflow replicates that report's layout and fields, not SMART Connect itself; everything comes straight out of EarthRanger. The account's patrol activity spans multiple sites (patrol titles reference Corozal Bay, Shipstern, New River, and others), so the workflow is site-general rather than scoped to one protected area.
+A dashboard summarizes patrol effort, staff effort, and vessel/fisher activity for the selected time range, with a map of patrol tracks and events. A downloadable Word report combines the same data with photo attachments for a shareable monthly record.
 
 ## Dashboard widgets
 
