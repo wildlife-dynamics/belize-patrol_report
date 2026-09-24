@@ -265,14 +265,13 @@
       "additionalProperties": false,
       "properties": {
         "var": {
+          "default": "",
           "title": "",
           "type": "string"
         }
       },
-      "required": [
-        "var"
-      ],
       "type": "object",
+      "required": [],
       "title": "Patrol ID"
     },
     "plot_palette": {

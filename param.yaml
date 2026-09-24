@@ -1,10 +1,10 @@
 # Real values confirmed live against the `belize` EarthRanger account
-# (sacdbelize.pamdas.org) - see PRD - Belize SWCMR.md.
+# (sacdbelize.pamdas.org).
 #
-# Time range: Feb 1, 2026 to Sep 22, 2026 - matches the source PDF's own
-# report start date, extended through the current date so there's real data
-# to run against (the PDF's exact Feb 2026 window has 0 patrols on this
-# account - confirmed in .scripts/explore_patrols_events.py).
+# Time range covers a recent window with real patrol activity, including at
+# least one patrol with zero linked vessel-inspection events (serial number
+# 95) - a useful edge case for testing the optional Patrol Serial Number
+# filter.
 
 workflow_details:
   name: Belize Patrol Report
@@ -15,8 +15,8 @@ er_client:
     name: belize
 
 time_range:
-  since: "2026-02-01T00:00:00.000Z"
-  until: "2026-09-22T00:00:00.000Z"
+  since: "2026-08-25T00:00:00.000Z"
+  until: "2026-09-24T23:59:00.000Z"
 
 base_maps:
   base_maps:
