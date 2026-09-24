@@ -14,7 +14,7 @@ requirements:
     channel: conda-forge
 
   - name: ecoscope-workflows-ext-belize
-    version: "0.0.0"
+    version: "0.0.1"
     channel: https://repo.prefix.dev/ecoscope-workflows-custom/
 
 rjsf-overrides:
@@ -26,13 +26,7 @@ rjsf-overrides:
 
     patrol_id_filter.properties.var.title: Patrol Serial Number
     patrol_id_filter.properties.var.description: "Leave blank to include every patrol in the time range, or enter a specific patrol's serial number to scope the report to just that one."
-    patrol_id_filter.properties.var.default: ""
     patrol_id_filter.properties.var.ecoscope:advanced: false
-    # set_string_var's own `var` has no default, so it's required by
-    # pydantic/jsonschema regardless of the .default override above (that's
-    # display-only) - the form blocked submission on a blank value. Clear it
-    # from required here instead of introducing a new task.
-    patrol_id_filter.required: []
 
     plot_palette.description: "Shared color palette for all report charts."
     plot_palette.properties.colormap.description: "Select a color palette for all charts. Use Set1, Set2, or Dark2 for a small number of categories (up to 8). Use tab20, tab20b, or tab20c when you have many categories (up to 20)."
@@ -96,6 +90,21 @@ rjsf-overrides:
     Viewstate.properties.activities_view_state.properties.outlier_trim_percent.title: Outlier Trim (%)
     Viewstate.properties.activities_view_state.properties.max_zoom.title: Max Zoom
 
+# Same as apn/icmbio - every task skips by default when any of its own
+# inputs is an empty dataframe, or a dependency was itself skipped, instead
+# of running on genuinely empty/malformed data. The scattered `skipif:
+# conditions: [never]` overrides already below (on widgets/the report task,
+# which should still render on zero data rather than disappear) were
+# written assuming this default exists - it was missing here, which is the
+# root cause of at least one real crash (event_colormap/activities_map on a
+# single-patrol-filtered view with zero linked events - confirmed live,
+# patrol serial 95).
+task-instance-defaults:
+  skipif:
+    conditions:
+      - any_is_empty_df
+      - any_dependency_skipped
+
 workflow:
   - name: Workflow Details
     id: workflow_details
@@ -132,7 +141,7 @@ workflow:
   # required. Defined here (before "Patrols") since patrols_filtered needs it.
   - name: Patrol ID
     id: patrol_id_filter
-    task: set_string_var
+    task: ecoscope_workflows_ext_belize.tasks.set_optional_string_var
 
   # One shared palette selection reused by every chart in the report
   # (Patrols by Mandate, Type of Vessels Inspected) - same convention as
@@ -468,33 +477,104 @@ workflow:
               column: fuel_used_gal
               decimal_places: 2
 
-      - id: patrol_effort_summary_table
-        task: draw_table
+      # Each value in the Patrol Effort Summary table gets its own stat card
+      # on the dashboard (same convention as apn's own Patrol Summary
+      # Statistics Cards) - extracted from the same single-row
+      # patrol_effort_summary table the docx report uses, via
+      # dataframe_column_sum (summing a single-row column just returns that
+      # row's value; float covers both the integer and decimal metrics here -
+      # dataframe_column_first_unique's own strict int return type rejected
+      # Distance (km)/Patrol Hours/Fuel Used's fractional values), so the
+      # dashboard and the docx always show identical numbers.
+      - name: Get Number of Patrols
+        id: pes_patrols
+        task: dataframe_column_sum
         partial:
-          dataframe: ${{ workflow.patrol_effort_summary.return }}
-          columns: null
-          table_config:
-            enable_sorting: false
-            enable_filtering: false
-            enable_download: true
-            hide_header: false
+          df: ${{ workflow.patrol_effort_summary.return }}
+          column_name: "Number of Patrols"
 
-      - id: patrol_effort_summary_html
-        task: persist_text
-        partial:
-          text: ${{ workflow.patrol_effort_summary_table.return }}
-          root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
-          filename_suffix: patrol_effort_summary
-
-      - name: Patrol Effort Summary Widget
-        id: patrol_effort_summary_sv
-        task: create_plot_widget_single_view
+      - name: Number of Patrols Widget
+        id: pes_patrols_sv
+        task: create_single_value_widget_single_view
         skipif:
           conditions:
             - never
         partial:
-          title: "Patrol Effort Summary"
-          data: ${{ workflow.patrol_effort_summary_html.return }}
+          title: "Number of Patrols"
+          decimal_places: 0
+          data: ${{ workflow.pes_patrols.return }}
+
+      - name: Get Distance (km)
+        id: pes_distance
+        task: dataframe_column_sum
+        partial:
+          df: ${{ workflow.patrol_effort_summary.return }}
+          column_name: "Distance (km)"
+
+      - name: Distance (km) Widget
+        id: pes_distance_sv
+        task: create_single_value_widget_single_view
+        skipif:
+          conditions:
+            - never
+        partial:
+          title: "Distance (km)"
+          decimal_places: 2
+          data: ${{ workflow.pes_distance.return }}
+
+      - name: Get Number of Nights
+        id: pes_nights
+        task: dataframe_column_sum
+        partial:
+          df: ${{ workflow.patrol_effort_summary.return }}
+          column_name: "Number of Nights"
+
+      - name: Number of Nights Widget
+        id: pes_nights_sv
+        task: create_single_value_widget_single_view
+        skipif:
+          conditions:
+            - never
+        partial:
+          title: "Number of Nights"
+          decimal_places: 0
+          data: ${{ workflow.pes_nights.return }}
+
+      - name: Get Number of Patrol Hours
+        id: pes_hours
+        task: dataframe_column_sum
+        partial:
+          df: ${{ workflow.patrol_effort_summary.return }}
+          column_name: "Number of Patrol Hours"
+
+      - name: Number of Patrol Hours Widget
+        id: pes_hours_sv
+        task: create_single_value_widget_single_view
+        skipif:
+          conditions:
+            - never
+        partial:
+          title: "Number of Patrol Hours"
+          decimal_places: 2
+          data: ${{ workflow.pes_hours.return }}
+
+      - name: Get Fuel Used (gal)
+        id: pes_fuel
+        task: dataframe_column_sum
+        partial:
+          df: ${{ workflow.patrol_effort_summary.return }}
+          column_name: "Fuel Used (gal)"
+
+      - name: Fuel Used (gal) Widget
+        id: pes_fuel_sv
+        task: create_single_value_widget_single_view
+        skipif:
+          conditions:
+            - never
+        partial:
+          title: "Fuel Used (gal)"
+          decimal_places: 2
+          data: ${{ workflow.pes_fuel.return }}
 
   - title: Staff Effort
     type: task-group
@@ -888,13 +968,34 @@ workflow:
         partial:
           df: ${{ workflow.recreational_events_filtered.return }}
 
+      # A filtered-to-one-patrol view can legitimately have zero linked
+      # vessel-inspection events (e.g. patrol 95 - "Patrol to Deer Caye" -
+      # documented no vessel encounters). event_colormap (below) has no
+      # skipif override, so it skips itself on this empty input via
+      # task-instance-defaults' any_is_empty_df - the drop_skipped_layers
+      # task further down absorbs that skip before it can reach draw_map.
+      # ensure_columns still guarantees event_colormap's possible Groupby
+      # columns exist on the (possibly empty) result as a defense-in-depth
+      # safety net, independent of the skip path.
       - id: events_for_map
         task: concat_dataframes
+        # concat_dataframes already tolerates empty inputs on its own (see its
+        # own docstring) - task-instance-defaults' any_is_empty_df would
+        # otherwise skip this task entirely whenever just ONE of the two
+        # event types is empty, silently dropping the other type's real data.
+        skipif:
+          conditions:
+            - never
         partial:
           dfs:
             - ${{ workflow.commercial_events_tagged.return }}
             - ${{ workflow.recreational_events_tagged.return }}
-          ensure_columns: []
+          ensure_columns:
+            - event_type_display
+            - event_category_display
+            - category
+            - id
+            - geometry
           reset_index: true
 
       - id: event_colormap
@@ -949,6 +1050,26 @@ workflow:
           layer_style:
             get_fill_color: column_color
 
+      # event_layer (above) has no skipif override, so it skips itself via
+      # task-instance-defaults whenever there are no linked vessel-inspection
+      # events for the patrol(s) in scope (e.g. patrol 95 - "Patrol to Deer
+      # Caye") - the semantically correct default. But draw_map's own
+      # geo_layers has no skip-tolerant fallback for a SkipSentinel inside
+      # the list (unlike concat_dataframes' dfs), so passing event_layer's
+      # skip straight through would otherwise crash or cascade the skip up
+      # to activities_map/activities_view_state themselves via that same
+      # default, losing patrol_track_layer's real data too - confirmed live
+      # (patrol 95, Sep 2026). drop_skipped_layers absorbs the skip here.
+      - id: activities_layers
+        task: ecoscope_workflows_ext_belize.tasks.drop_skipped_layers
+        skipif:
+          conditions:
+            - never
+        partial:
+          layers:
+            - ${{ workflow.patrol_track_layer.return }}
+            - ${{ workflow.event_layer.return }}
+
       # Neither view_state_from_layers (the core org task) nor this package's
       # earlier compute_fitted_view_state (ported from ecoscope-workflows-ext-wd)
       # account for this map's actual WIDE (1280x720) render aspect ratio or
@@ -963,16 +1084,12 @@ workflow:
       - id: activities_view_state
         task: ecoscope_workflows_ext_belize.tasks.fit_view_to_geodataframes
         partial:
-          geo_layers:
-            - ${{ workflow.patrol_track_layer.return }}
-            - ${{ workflow.event_layer.return }}
+          geo_layers: ${{ workflow.activities_layers.return }}
 
       - id: activities_map
         task: draw_map
         partial:
-          geo_layers:
-            - ${{ workflow.patrol_track_layer.return }}
-            - ${{ workflow.event_layer.return }}
+          geo_layers: ${{ workflow.activities_layers.return }}
           tile_layers: ${{ workflow.base_maps.return }}
           static: false
           title: null
@@ -1095,7 +1212,11 @@ workflow:
     partial:
       details: ${{ workflow.workflow_details.return }}
       widgets:
-        - ${{ workflow.patrol_effort_summary_sv.return }}
+        - ${{ workflow.pes_patrols_sv.return }}
+        - ${{ workflow.pes_distance_sv.return }}
+        - ${{ workflow.pes_nights_sv.return }}
+        - ${{ workflow.pes_hours_sv.return }}
+        - ${{ workflow.pes_fuel_sv.return }}
         - ${{ workflow.staff_effort_sv.return }}
         - ${{ workflow.patrols_by_mandate_sv.return }}
         - ${{ workflow.vessels_inspected_sv.return }}
