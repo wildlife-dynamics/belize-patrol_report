@@ -1,8 +1,8 @@
 # Belize Patrol Report
 
-Belize Fisheries Department — EarthRanger monthly patrol & vessel monitoring report, covering all of the department's protected areas on the shared `belize` EarthRanger account (`https://sacdbelize.pamdas.org`), not just one site. Patrol activity spans multiple sites (patrol titles reference Corozal Bay, Shipstern, New River, and others), so the workflow is site-general rather than scoped to one protected area.
+Belize Fisheries Department patrol and vessel-inspection report, pulling patrols and events from the shared `belize` EarthRanger account (`https://sacdbelize.pamdas.org`). Patrol titles in the data reference Corozal Bay, Shipstern, New River, and other sites sharing this one account, so the workflow reports across all of them for the selected time range rather than filtering to one.
 
-A dashboard summarizes patrol effort, staff effort, and vessel/fisher activity for the selected time range, with a map of patrol tracks and events. A downloadable Word report combines the same data with photo attachments for a shareable monthly record.
+It produces a dashboard (patrol/staff effort tables, patrols-by-mandate and vessels-inspected charts, per-category vessel and fisher tables, a map of patrol tracks and events) and a `.docx` report combining the same tables and charts with photos downloaded from EarthRanger event attachments.
 
 ## Dashboard widgets
 
