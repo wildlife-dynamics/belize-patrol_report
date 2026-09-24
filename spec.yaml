@@ -1,0 +1,1104 @@
+id: belize_patrol_report
+
+requirements:
+  - name: ecoscope-platform
+    version: ">=2.17.0,<3.0.0"
+    channel: https://repo.prefix.dev/ecoscope-workflows/
+
+  - name: ecoscope-workflows-ext-custom
+    version: "0.1.1"
+    channel: https://repo.prefix.dev/ecoscope-workflows-custom/
+
+  - name: pydeck
+    version: 0.9.2
+    channel: conda-forge
+
+  - name: ecoscope-workflows-ext-belize
+    version: "0.0.0"
+    channel: file:///tmp/ecoscope-workflows-custom/release/artifacts/
+
+rjsf-overrides:
+  properties:
+    Patrol Report.properties.report_template_path.properties.var.title: Template Path
+    Patrol Report.properties.report_template_path.properties.var.description: "Path or URL to the .docx Jinja2 template used for the patrol report."
+    Patrol Report.properties.report_template_path.properties.var.default: "https://raw.githubusercontent.com/wildlife-dynamics/belize-patrol_report/main/resources/templates/belize_patrol_report_template.docx"
+    Patrol Report.properties.report_template_path.properties.var.ecoscope:advanced: false
+
+    patrol_id_filter.properties.var.title: Patrol Serial Number
+    patrol_id_filter.properties.var.description: "Leave blank to include every patrol in the time range, or enter a specific patrol's serial number to scope the report to just that one."
+    patrol_id_filter.properties.var.default: ""
+    patrol_id_filter.properties.var.ecoscope:advanced: false
+
+    plot_palette.description: "Shared color palette for all report charts."
+    plot_palette.properties.colormap.description: "Select a color palette for all charts. Use Set1, Set2, or Dark2 for a small number of categories (up to 8). Use tab20, tab20b, or tab20c when you have many categories (up to 20)."
+    plot_palette.properties.custom_colors.description: "Optional. Provide one hex color per category (e.g. #e41a1c, #377eb8). Leave empty to use the palette above."
+
+    download_attachments.properties.skip_download.title: Skip Photo Attachments
+    download_attachments.properties.skip_download.description: "If True, skip downloading event photos, and the report will not include any images from inspections."
+    download_attachments.properties.skip_download.ecoscope:advanced: false
+
+    Patrol Style.properties.track_colormap.properties.input_column_name.title: Groupby
+    Patrol Style.properties.track_colormap.properties.input_column_name.description: "Color patrol tracks by the selected attribute. Each unique value is assigned a distinct color on the map."
+    Patrol Style.properties.track_colormap.properties.input_column_name.default: extra__patrol_type__display
+    Patrol Style.properties.track_colormap.properties.input_column_name.ecoscope:advanced: false
+    Patrol Style.properties.track_colormap.properties.input_column_name.oneOf:
+      - const: extra__patrol_type__display
+        title: Patrol Type
+      - const: extra__patrol_id
+        title: Patrol ID
+      - const: extra__patrol_status
+        title: Patrol Status
+      - const: extra__patrol_subject
+        title: Subject
+    Patrol Style.properties.track_colormap.properties.colormap.title: Palette
+    Patrol Style.properties.track_colormap.properties.colormap.description: "Choose a color palette. For low-cardinality data (e.g. patrol type) any palette works; for high-cardinality data (e.g. IDs) use tab20, tab20b, or tab20c to reduce color repetition."
+    Patrol Style.properties.track_colormap.properties.colormap.default: Set1
+    Patrol Style.properties.track_colormap.properties.colormap.ecoscope:advanced: false
+    Patrol Style.properties.track_colormap.properties.custom_colors.title: Custom Colors
+    Patrol Style.properties.track_colormap.properties.custom_colors.description: "Leave empty to use the palette above. When provided, these colors are applied instead."
+    Patrol Style.properties.track_colormap.properties.custom_colors.ecoscope:advanced: false
+    Patrol Style.properties.track_legend_title.properties.var.title: Title
+    Patrol Style.properties.track_legend_title.properties.var.description: "Legend title for patrol tracks."
+    Patrol Style.properties.track_legend_title.properties.var.default: "Patrol Type"
+    Patrol Style.properties.track_legend_title.properties.var.ecoscope:advanced: false
+
+    Event Style.properties.event_colormap.properties.input_column_name.title: Groupby
+    Event Style.properties.event_colormap.properties.input_column_name.description: "Color events by the selected attribute. Each unique value is assigned a distinct color on the map."
+    Event Style.properties.event_colormap.properties.input_column_name.default: event_type_display
+    Event Style.properties.event_colormap.properties.input_column_name.ecoscope:advanced: false
+    Event Style.properties.event_colormap.properties.input_column_name.oneOf:
+      - const: event_type_display
+        title: Event Type
+      - const: event_category_display
+        title: Event Category
+      - const: category
+        title: Vessel Category
+      - const: id
+        title: Event ID
+    Event Style.properties.event_colormap.properties.colormap.title: Palette
+    Event Style.properties.event_colormap.properties.colormap.description: "Choose a color palette. For low-cardinality data (e.g. event type) any palette works; for high-cardinality data (e.g. IDs) use tab20, tab20b, or tab20c to reduce color repetition."
+    Event Style.properties.event_colormap.properties.colormap.default: Dark2
+    Event Style.properties.event_colormap.properties.colormap.ecoscope:advanced: false
+    Event Style.properties.event_colormap.properties.custom_colors.title: Custom Colors
+    Event Style.properties.event_colormap.properties.custom_colors.description: "Leave empty to use the palette above. When provided, these colors are applied instead."
+    Event Style.properties.event_colormap.properties.custom_colors.ecoscope:advanced: false
+    Event Style.properties.event_legend_title.properties.var.title: Title
+    Event Style.properties.event_legend_title.properties.var.description: "Legend title for events."
+    Event Style.properties.event_legend_title.properties.var.default: "Event Type"
+    Event Style.properties.event_legend_title.properties.var.ecoscope:advanced: false
+
+    Map of Activities Documented.properties.activities_view_state.properties.padding_fraction.title: Padding Around Data
+    Map of Activities Documented.properties.activities_view_state.properties.outlier_trim_percent.title: Outlier Trim (%)
+    Map of Activities Documented.properties.activities_view_state.properties.max_zoom.title: Max Zoom
+
+workflow:
+  - name: Workflow Details
+    id: workflow_details
+    task: set_workflow_details
+
+  - name: Data Source
+    id: er_client
+    task: set_er_connection
+
+  - name: Time Range
+    id: time_range
+    task: set_time_range
+    partial:
+      time_format: "%b %-d, %Y %-I:%M %p"
+
+  - id: get_timezone
+    task: get_timezone_from_time_range
+    partial:
+      time_range: ${{ workflow.time_range.return }}
+
+  - name: Base Maps
+    id: base_maps
+    task: set_base_maps
+
+  - name: Define Groupers
+    id: groupers
+    task: set_groupers
+    partial:
+      groupers: []
+
+  # Optional - a specific patrol's serial number. Blank (default) reports on
+  # every patrol in Time Range, same as before this existed. Same shape as
+  # ICMBio-Individual_patrol's own "Patrol" input, just optional instead of
+  # required. Defined here (before "Patrols") since patrols_filtered needs it.
+  - name: Patrol ID
+    id: patrol_id_filter
+    task: set_string_var
+
+  # One shared palette selection reused by every chart in the report
+  # (Patrols by Mandate, Type of Vessels Inspected) - same convention as
+  # apn's own plot_palette/set_color_palette task. The map's Patrol
+  # Style/Event Style colors stay separate - a different concern, same as apn.
+  - name: Chart Color Palette
+    id: plot_palette
+    task: ecoscope_workflows_ext_belize.tasks.set_color_palette
+
+  # ---------------------------------------------------------------------------
+  - title: Patrols
+    type: task-group
+    description: "Pull patrols for the period. Every table/chart/map below is scoped to these."
+    tasks:
+      - id: patrols
+        task: get_patrols
+        partial:
+          client: ${{ workflow.er_client.return }}
+          time_range: ${{ workflow.time_range.return }}
+          patrol_types: []
+          status: null
+          sub_page_size: 100
+          patrols_overlap_daterange: true
+          raise_on_empty: false
+
+      - id: patrols_filtered
+        task: ecoscope_workflows_ext_belize.tasks.filter_patrols_by_id
+        partial:
+          patrols_df: ${{ workflow.patrols.return }}
+          patrol_id: ${{ workflow.patrol_id_filter.return }}
+
+      # The authoritative patrol<->event link (same data as patrol_segments[].events).
+      # An event's OWN "patrols" field (from get_events) is NOT reliable here -
+      # confirmed live against this account: some genuinely patrol-linked events
+      # carry an empty "patrols" list. No event_type filter here - every type this
+      # workflow needs (and any it doesn't, e.g. wildlife_observations) comes back,
+      # so downstream steps filter by event_type themselves. Built from
+      # patrols_filtered (not the raw patrols fetch) so a Patrol ID filter
+      # automatically scopes this linkage - and everything keyed off it
+      # (vessel/fisher event filtering below) - to just that one patrol.
+      #
+      # event_states: null - not filtering by event review state (new/active/
+      # resolved/review), same as every event fetch elsewhere in this spec.
+      # truncate_to_time_range: true - an event attached to a patrol but
+      # timestamped outside Time Range gets clipped to it, matching this org's
+      # own convention (see ICMBio-Individual_patrol's identical field).
+      - id: patrol_linkage
+        task: unpack_events_from_patrols_df
+        partial:
+          patrols_df: ${{ workflow.patrols_filtered.return }}
+          time_range: ${{ workflow.time_range.return }}
+          event_types: []
+          event_states: null
+          truncate_to_time_range: true
+          include_null_geometry: true
+          raise_on_empty: false
+
+  # ---------------------------------------------------------------------------
+  # Real GPS-track distance/duration per patrol, from patrol observations -
+  # not a field ER exposes directly. patrol_observations through relocs here,
+  # then trajs standalone with its own name - same structure as
+  # ICMBio-patrol_analysis's own patrol_observations/relocs/trajs chain
+  # (which leaves this group's title/description blank; named "Patrol" here
+  # instead so the Patrol Status field has a heading).
+  - title: Get Patrol
+    type: task-group
+    description: ""
+    tasks:
+      - id: patrol_observations
+        task: get_patrol_observations
+        partial:
+          client: ${{ workflow.er_client.return }}
+          time_range: ${{ workflow.time_range.return }}
+          patrol_types: []
+          include_patrol_details: true
+          raise_on_empty: false
+          sub_page_size: 100
+          patrols_overlap_daterange: true
+
+      # get_patrol_observations has no patrols_df/patrol_id input of its own -
+      # it's an independent fetch over the whole time range - so a Patrol ID
+      # filter is applied here, after the fact, against patrols_filtered.
+      - id: patrol_observations_filtered
+        task: ecoscope_workflows_ext_belize.tasks.filter_observations_by_patrol_id
+        partial:
+          df: ${{ workflow.patrol_observations.return }}
+          patrols_df: ${{ workflow.patrols_filtered.return }}
+          patrol_id: ${{ workflow.patrol_id_filter.return }}
+
+      - id: convert_patrol_obs_tz
+        task: convert_values_to_timezone
+        partial:
+          df: ${{ workflow.patrol_observations_filtered.return }}
+          timezone: ${{ workflow.get_timezone.return }}
+          columns:
+            - patrol_start_time
+            - patrol_end_time
+            - fixtime
+
+      - id: relocs
+        task: process_relocations
+        partial:
+          observations: ${{ workflow.convert_patrol_obs_tz.return }}
+          relocs_columns:
+            - patrol_id
+            - patrol_type__display
+            - groupby_col
+            - fixtime
+            - junk_status
+            - geometry
+          filter_point_coords:
+            - x: 180.000000
+              y: 90.000000
+            - x: 0.000000
+              y: 0.000000
+            - x: 1.000000
+              y: 1.000000
+
+  - name: Filter Trajectory
+    id: trajs
+    task: relocations_to_trajectory
+    partial:
+      relocations: ${{ workflow.relocs.return }}
+
+  - id: trajectory_stats_by_patrol
+    task: summarize_df
+    partial:
+      df: ${{ workflow.trajs.return }}
+      groupby_cols:
+        - extra__patrol_id
+      reset_index: true
+      summary_params:
+        - display_name: distance_km
+          aggregator: sum
+          column: dist_meters
+          original_unit: m
+          new_unit: km
+          decimal_places: 2
+        - display_name: duration_hours
+          aggregator: sum
+          column: timespan_seconds
+          original_unit: s
+          new_unit: h
+          decimal_places: 2
+
+  - id: trajectory_stats
+    task: map_columns
+    partial:
+      df: ${{ workflow.trajectory_stats_by_patrol.return }}
+      rename_columns:
+        extra__patrol_id: patrol_id
+      raise_if_not_found: false
+      retain_columns: null
+      drop_columns: null
+      duplicate_strategy: suffix
+
+  # ---------------------------------------------------------------------------
+  - title: Patrol Events
+    type: task-group
+    description: >-
+      Exactly the event types the source report's tables need (patrol_details,
+      patrol_completion_log, recreational_vessels, commercial_fishing_vessels_inspections).
+      Two real event types exist on this account with real data but no matching
+      report section (fishing_gear_removed_from_pa, cargo_or_other_types_of_vessesls)
+      - deliberately out of scope, not fetched.
+    tasks:
+      # Every field below is hardcoded (not left exposed/advanced) - same
+      # convention as ICMBio-patrol_analysis/APN-patrol_event's own get_events
+      # calls. event_columns is that same shared core list (id/time/event_type/
+      # event_category/serial_number/event_details/geometry) across all four
+      # event types here, for consistency.
+      - id: patrol_details_events
+        task: get_events
+        partial:
+          client: ${{ workflow.er_client.return }}
+          time_range: ${{ workflow.time_range.return }}
+          event_types:
+            - patrol_details
+          event_columns:
+            - id
+            - time
+            - event_type
+            - event_category
+            - serial_number
+            - event_details
+            - geometry
+          event_states: null
+          include_details: true
+          include_display_values: true
+          include_updates: false
+          include_related_events: false
+          force_point_geometry: true
+          include_null_geometry: true
+          raise_on_empty: false
+
+      - id: completion_log_events
+        task: get_events
+        partial:
+          client: ${{ workflow.er_client.return }}
+          time_range: ${{ workflow.time_range.return }}
+          event_types:
+            - patrol_completion_log
+          event_columns:
+            - id
+            - time
+            - event_type
+            - event_category
+            - serial_number
+            - event_details
+            - geometry
+          event_states: null
+          include_details: true
+          include_display_values: true
+          include_updates: false
+          include_related_events: false
+          force_point_geometry: true
+          include_null_geometry: true
+          raise_on_empty: false
+
+      - id: recreational_vessel_events
+        task: get_events
+        partial:
+          client: ${{ workflow.er_client.return }}
+          time_range: ${{ workflow.time_range.return }}
+          event_types:
+            - recreational_vessels
+          event_columns:
+            - id
+            - time
+            - event_type
+            - event_category
+            - serial_number
+            - event_details
+            - geometry
+          event_states: null
+          include_details: true
+          include_display_values: true
+          include_updates: false
+          include_related_events: false
+          force_point_geometry: true
+          include_null_geometry: false
+          raise_on_empty: false
+
+      - id: commercial_fishing_events
+        task: get_events
+        partial:
+          client: ${{ workflow.er_client.return }}
+          time_range: ${{ workflow.time_range.return }}
+          event_types:
+            - commercial_fishing_vessels_inspections
+          event_columns:
+            - id
+            - time
+            - event_type
+            - event_category
+            - serial_number
+            - event_details
+            - geometry
+          event_states: null
+          include_details: true
+          include_display_values: true
+          include_updates: false
+          include_related_events: false
+          force_point_geometry: true
+          include_null_geometry: false
+          raise_on_empty: false
+
+      # These two event types aren't joined into assemble_patrol_summary the
+      # way patrol_details/completion_log are, so a Patrol ID filter has to be
+      # applied here explicitly, via the same authoritative patrol<->event
+      # linkage patrol_linkage already provides (not an event's own
+      # unreliable 'patrols' field). Blank Patrol ID: passthrough unchanged.
+      - id: recreational_events_filtered
+        task: ecoscope_workflows_ext_belize.tasks.filter_events_by_patrol_linkage
+        partial:
+          events_df: ${{ workflow.recreational_vessel_events.return }}
+          patrol_linkage: ${{ workflow.patrol_linkage.return }}
+          event_type: recreational_vessels
+          patrol_id: ${{ workflow.patrol_id_filter.return }}
+
+      - id: commercial_events_filtered
+        task: ecoscope_workflows_ext_belize.tasks.filter_events_by_patrol_linkage
+        partial:
+          events_df: ${{ workflow.commercial_fishing_events.return }}
+          patrol_linkage: ${{ workflow.patrol_linkage.return }}
+          event_type: commercial_fishing_vessels_inspections
+          patrol_id: ${{ workflow.patrol_id_filter.return }}
+
+  # ---------------------------------------------------------------------------
+  - title: Patrol Summary
+    type: task-group
+    description: "One row per patrol: leader, transport type, mandate, fuel, nights, distance, duration - the Patrol Effort Summary / Staff Effort source table."
+    tasks:
+      - id: patrol_table
+        task: ecoscope_workflows_ext_belize.tasks.assemble_patrol_summary
+        partial:
+          client: ${{ workflow.er_client.return }}
+          patrols_df: ${{ workflow.patrols_filtered.return }}
+          patrol_details_events: ${{ workflow.patrol_details_events.return }}
+          completion_log_events: ${{ workflow.completion_log_events.return }}
+          patrol_linkage: ${{ workflow.patrol_linkage.return }}
+          trajectory_stats: ${{ workflow.trajectory_stats.return }}
+
+  - title: Patrol Effort Summary
+    type: task-group
+    description: "Number of Patrols, Distance (km), Number of Nights, Number of Patrol Hours, Fuel Used (G)."
+    tasks:
+      - id: patrol_effort_summary
+        task: summarize_df
+        partial:
+          df: ${{ workflow.patrol_table.return }}
+          groupby_cols: []
+          reset_index: true
+          summary_params:
+            - display_name: "Number of Patrols"
+              aggregator: count
+              column: patrol_id
+              decimal_places: null
+            - display_name: "Distance (km)"
+              aggregator: sum
+              column: distance_km
+              decimal_places: 2
+            - display_name: "Number of Nights"
+              aggregator: sum
+              column: nights
+              decimal_places: 0
+            - display_name: "Number of Patrol Hours"
+              aggregator: sum
+              column: duration_hours
+              decimal_places: 2
+            - display_name: "Fuel Used (gal)"
+              aggregator: sum
+              column: fuel_used_gal
+              decimal_places: 2
+
+      - id: patrol_effort_summary_table
+        task: draw_table
+        partial:
+          dataframe: ${{ workflow.patrol_effort_summary.return }}
+          columns: null
+          table_config:
+            enable_sorting: false
+            enable_filtering: false
+            enable_download: true
+            hide_header: false
+
+      - id: patrol_effort_summary_html
+        task: persist_text
+        partial:
+          text: ${{ workflow.patrol_effort_summary_table.return }}
+          root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+          filename_suffix: patrol_effort_summary
+
+      - name: Patrol Effort Summary Widget
+        id: patrol_effort_summary_sv
+        task: create_plot_widget_single_view
+        skipif:
+          conditions:
+            - never
+        partial:
+          title: "Patrol Effort Summary"
+          data: ${{ workflow.patrol_effort_summary_html.return }}
+
+  - title: Staff Effort
+    type: task-group
+    description: "Per-officer patrols, nights, distance, hours."
+    tasks:
+      - id: staff_effort
+        task: summarize_df
+        partial:
+          df: ${{ workflow.patrol_table.return }}
+          groupby_cols:
+            - leader
+          reset_index: true
+          summary_params:
+            - display_name: "Number of Patrols"
+              aggregator: count
+              column: patrol_id
+              decimal_places: null
+            - display_name: "Number of Nights"
+              aggregator: sum
+              column: nights
+              decimal_places: 0
+            - display_name: "Distance (km)"
+              aggregator: sum
+              column: distance_km
+              decimal_places: 2
+            - display_name: "Number of Hours"
+              aggregator: sum
+              column: duration_hours
+              decimal_places: 2
+
+      - id: staff_effort_renamed
+        task: map_columns
+        partial:
+          df: ${{ workflow.staff_effort.return }}
+          rename_columns:
+            leader: "Officer Name"
+          raise_if_not_found: false
+          retain_columns: null
+          drop_columns: null
+          duplicate_strategy: suffix
+
+      - id: staff_effort_table
+        task: draw_table
+        partial:
+          dataframe: ${{ workflow.staff_effort_renamed.return }}
+          columns: null
+          table_config:
+            enable_sorting: true
+            enable_filtering: true
+            enable_download: true
+            hide_header: false
+
+      - id: staff_effort_html
+        task: persist_text
+        partial:
+          text: ${{ workflow.staff_effort_table.return }}
+          root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+          filename_suffix: staff_effort
+
+      - name: Staff Effort Widget
+        id: staff_effort_sv
+        task: create_plot_widget_single_view
+        skipif:
+          conditions:
+            - never
+        partial:
+          title: "Staff Effort"
+          data: ${{ workflow.staff_effort_html.return }}
+
+  - title: Patrols by Mandate
+    type: task-group
+    description: "Bar chart - mandate display names resolved live in Patrol Summary above, not hardcoded."
+    tasks:
+      - id: patrols_by_mandate
+        task: summarize_df
+        partial:
+          df: ${{ workflow.patrol_table.return }}
+          groupby_cols:
+            - mandate
+          reset_index: true
+          summary_params:
+            - display_name: "Count"
+              aggregator: count
+              column: patrol_id
+              decimal_places: null
+
+      - id: patrols_by_mandate_chart
+        task: ecoscope_workflows_ext_belize.tasks.draw_bar_chart_colored
+        partial:
+          dataframe: ${{ workflow.patrols_by_mandate.return }}
+          category: mandate
+          colors: ${{ workflow.plot_palette.return }}
+          bar_chart_configs:
+            - column: "Count"
+              agg_func: sum
+              label: Patrols
+              show_label: false
+          layout_kwargs:
+            title: null
+
+      - id: patrols_by_mandate_chart_html
+        task: persist_text
+        partial:
+          text: ${{ workflow.patrols_by_mandate_chart.return }}
+          root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+          filename_suffix: patrols_by_mandate_chart
+
+      - name: Patrols by Mandate Widget
+        id: patrols_by_mandate_sv
+        task: create_plot_widget_single_view
+        skipif:
+          conditions:
+            - never
+        partial:
+          title: "Patrols by Mandate"
+          data: ${{ workflow.patrols_by_mandate_chart_html.return }}
+
+  # ---------------------------------------------------------------------------
+  - title: Vessels & Fishers
+    type: task-group
+    description: "Recreational Fishing/Tourism, Commercial Fishing Vessels Encountered, Fishers Documented."
+    tasks:
+      - id: recreational_fishing_vessels
+        task: ecoscope_workflows_ext_belize.tasks.filter_recreational_vessels_by_category
+        partial:
+          df: ${{ workflow.recreational_events_filtered.return }}
+          category: fishing
+          client: ${{ workflow.er_client.return }}
+
+      - id: recreational_tourism_vessels
+        task: ecoscope_workflows_ext_belize.tasks.filter_recreational_vessels_by_category
+        partial:
+          df: ${{ workflow.recreational_events_filtered.return }}
+          category: tourism
+          client: ${{ workflow.er_client.return }}
+
+      - id: commercial_fishing_vessels
+        task: ecoscope_workflows_ext_belize.tasks.flatten_commercial_fishing_vessels
+        partial:
+          df: ${{ workflow.commercial_events_filtered.return }}
+          client: ${{ workflow.er_client.return }}
+
+      - id: fishers_documented
+        task: ecoscope_workflows_ext_belize.tasks.explode_commercial_fishing_fishers
+        partial:
+          df: ${{ workflow.commercial_events_filtered.return }}
+          client: ${{ workflow.er_client.return }}
+
+      - id: recreational_fishing_count
+        task: dataframe_count
+        partial:
+          df: ${{ workflow.recreational_fishing_vessels.return }}
+
+      - id: recreational_tourism_count
+        task: dataframe_count
+        partial:
+          df: ${{ workflow.recreational_tourism_vessels.return }}
+
+      - id: commercial_fishing_count
+        task: dataframe_count
+        partial:
+          df: ${{ workflow.commercial_fishing_vessels.return }}
+
+      # "subsistence_fishing" left null - see the PRD open question (no
+      # matching field exists anywhere for subsistence fishing).
+      - id: vessels_documented
+        task: ecoscope_workflows_ext_belize.tasks.assemble_vessels_documented
+        partial:
+          recreational_fishing_count: ${{ workflow.recreational_fishing_count.return }}
+          commercial_fishing_count: ${{ workflow.commercial_fishing_count.return }}
+          tourism_vessel_count: ${{ workflow.recreational_tourism_count.return }}
+
+      - id: recreational_fishing_table
+        task: draw_table
+        partial:
+          dataframe: ${{ workflow.recreational_fishing_vessels.return }}
+          columns: null
+          table_config:
+            enable_sorting: true
+            enable_filtering: true
+            enable_download: true
+            hide_header: false
+
+      - id: recreational_fishing_html
+        task: persist_text
+        partial:
+          text: ${{ workflow.recreational_fishing_table.return }}
+          root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+          filename_suffix: recreational_fishing_vessels
+
+      - name: Recreational Fishing Vessels Widget
+        id: recreational_fishing_sv
+        task: create_plot_widget_single_view
+        skipif:
+          conditions:
+            - never
+        partial:
+          title: "Recreational Fishing Vessels"
+          data: ${{ workflow.recreational_fishing_html.return }}
+
+      - id: recreational_tourism_table
+        task: draw_table
+        partial:
+          dataframe: ${{ workflow.recreational_tourism_vessels.return }}
+          columns: null
+          table_config:
+            enable_sorting: true
+            enable_filtering: true
+            enable_download: true
+            hide_header: false
+
+      - id: recreational_tourism_html
+        task: persist_text
+        partial:
+          text: ${{ workflow.recreational_tourism_table.return }}
+          root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+          filename_suffix: recreational_tourism_vessels
+
+      - name: Recreational Tourism Vessels Widget
+        id: recreational_tourism_sv
+        task: create_plot_widget_single_view
+        skipif:
+          conditions:
+            - never
+        partial:
+          title: "Recreational Tourism Vessels"
+          data: ${{ workflow.recreational_tourism_html.return }}
+
+      - id: commercial_fishing_vessels_table
+        task: draw_table
+        partial:
+          dataframe: ${{ workflow.commercial_fishing_vessels.return }}
+          columns: null
+          table_config:
+            enable_sorting: true
+            enable_filtering: true
+            enable_download: true
+            hide_header: false
+
+      - id: commercial_fishing_vessels_html
+        task: persist_text
+        partial:
+          text: ${{ workflow.commercial_fishing_vessels_table.return }}
+          root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+          filename_suffix: commercial_fishing_vessels
+
+      - name: Commercial Fishing Vessels Encountered Widget
+        id: commercial_fishing_vessels_sv
+        task: create_plot_widget_single_view
+        skipif:
+          conditions:
+            - never
+        partial:
+          title: "Commercial Fishing Vessels Encountered"
+          data: ${{ workflow.commercial_fishing_vessels_html.return }}
+
+      - id: fishers_documented_table
+        task: draw_table
+        partial:
+          dataframe: ${{ workflow.fishers_documented.return }}
+          columns: null
+          table_config:
+            enable_sorting: true
+            enable_filtering: true
+            enable_download: true
+            hide_header: false
+
+      - id: fishers_documented_html
+        task: persist_text
+        partial:
+          text: ${{ workflow.fishers_documented_table.return }}
+          root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+          filename_suffix: fishers_documented
+
+      - name: Fishers Documented Widget
+        id: fishers_documented_sv
+        task: create_plot_widget_single_view
+        skipif:
+          conditions:
+            - never
+        partial:
+          title: "Fishers Documented"
+          data: ${{ workflow.fishers_documented_html.return }}
+
+      - id: vessels_documented_table
+        task: draw_table
+        partial:
+          dataframe: ${{ workflow.vessels_documented.return }}
+          columns: null
+          table_config:
+            enable_sorting: false
+            enable_filtering: false
+            enable_download: true
+            hide_header: false
+
+      - id: vessels_documented_html
+        task: persist_text
+        partial:
+          text: ${{ workflow.vessels_documented_table.return }}
+          root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+          filename_suffix: vessels_documented
+
+      - name: Vessels Documented Widget
+        id: vessels_documented_sv
+        task: create_plot_widget_single_view
+        skipif:
+          conditions:
+            - never
+        partial:
+          title: "Vessels Documented"
+          data: ${{ workflow.vessels_documented_html.return }}
+
+  - title: Type of Vessels Inspected
+    type: task-group
+    description: >-
+      Same 3 categories as Vessels Documented, as a bar chart - the source
+      PDF's own chart type (a pie was tried and rejected in favor of matching
+      the original).
+    tasks:
+      - id: vessels_by_category
+        task: ecoscope_workflows_ext_belize.tasks.assemble_vessels_by_category
+        partial:
+          commercial_fishing_count: ${{ workflow.commercial_fishing_count.return }}
+          recreational_fishing_count: ${{ workflow.recreational_fishing_count.return }}
+          recreational_tourism_count: ${{ workflow.recreational_tourism_count.return }}
+
+      - id: vessels_inspected_chart
+        task: ecoscope_workflows_ext_belize.tasks.draw_bar_chart_colored
+        partial:
+          dataframe: ${{ workflow.vessels_by_category.return }}
+          category: category
+          colors: ${{ workflow.plot_palette.return }}
+          bar_chart_configs:
+            - column: count
+              agg_func: sum
+              label: Vessels
+              show_label: false
+          layout_kwargs:
+            title: null
+
+      - id: vessels_inspected_chart_html
+        task: persist_text
+        partial:
+          text: ${{ workflow.vessels_inspected_chart.return }}
+          root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+          filename_suffix: vessels_inspected_chart
+
+      - name: Type of Vessels Inspected Widget
+        id: vessels_inspected_sv
+        task: create_plot_widget_single_view
+        skipif:
+          conditions:
+            - never
+        partial:
+          title: "Type of Vessels Inspected"
+          data: ${{ workflow.vessels_inspected_chart_html.return }}
+
+  # ---------------------------------------------------------------------------
+  # Split into Patrol Style / Event Style (not one combined "Map Style") -
+  # same structure as APN-patrol_event. track_colormap/event_colormap's
+  # input_column_name is a real "Groupby" dropdown here (oneOf, see
+  # rjsf-overrides), not hardcoded - same as apn's own Patrol Style/Event
+  # Style. track_legend_title/event_legend_title use only `id:` (no `name:`) -
+  # apn's own convention for a task meant to stay nested in its group; a
+  # `name:` on a nested task leaks it to the top level instead (confirmed
+  # live earlier - see session history), which is why these were briefly
+  # pulled out to standalone top-level items before this fix.
+  - title: Patrol Style
+    type: task-group
+    description: ""
+    tasks:
+      - id: track_colormap
+        task: ecoscope_workflows_ext_belize.tasks.apply_qualitative_color_map
+        partial:
+          df: ${{ workflow.trajs.return }}
+
+      - id: track_legend_title
+        task: set_string_var
+
+  - title: Event Style
+    type: task-group
+    description: ""
+    tasks:
+      - id: commercial_events_tagged
+        task: ecoscope_workflows_ext_belize.tasks.tag_commercial_vessel_category
+        partial:
+          df: ${{ workflow.commercial_events_filtered.return }}
+
+      - id: recreational_events_tagged
+        task: ecoscope_workflows_ext_belize.tasks.tag_recreational_vessel_category
+        partial:
+          df: ${{ workflow.recreational_events_filtered.return }}
+
+      - id: events_for_map
+        task: concat_dataframes
+        partial:
+          dfs:
+            - ${{ workflow.commercial_events_tagged.return }}
+            - ${{ workflow.recreational_events_tagged.return }}
+          ensure_columns: []
+          reset_index: true
+
+      - id: event_colormap
+        task: ecoscope_workflows_ext_belize.tasks.apply_qualitative_color_map
+        partial:
+          df: ${{ workflow.events_for_map.return }}
+
+      - id: event_legend_title
+        task: set_string_var
+
+  # Same pattern as ICMBio-patrol_analysis's own Download Event Attachments -
+  # loops every mapped event (commercial + recreational vessel inspections),
+  # fetches its attachments (e.g. inspection/catch photos), and saves them
+  # under output_dir/attachments/<event_id>/... skip_download stays
+  # user-configurable (a period with lots of photographed inspections can
+  # mean a slow download; skipping is a real, common choice, not just an
+  # edge case).
+  - name: Download Event Attachments
+    id: download_attachments
+    task: download_event_attachments
+    partial:
+      client: ${{ workflow.er_client.return }}
+      event_gdf: ${{ workflow.event_colormap.return }}
+      output_dir: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      attachments_subdir: attachments
+      use_index_as_id: false
+
+  - title: Map of Activities Documented
+    type: task-group
+    description: ""
+    tasks:
+      - id: patrol_track_layer
+        task: create_path_layer
+        partial:
+          geodataframe: ${{ workflow.track_colormap.return }}
+          legend:
+            title: ${{ workflow.track_legend_title.return }}
+            label_column: column_label
+            color_column: column_color
+          data_url: null
+          tooltip_columns:
+            - extra__patrol_type__display
+            - dist_meters
+            - timespan_seconds
+          # The legend alone doesn't color the track - PathLayerStyle.get_color
+          # defaults to None (an "advanced"/hidden form field), so without this
+          # deck.gl falls back to its own default (black) regardless of the
+          # per-row column_color values apply_qualitative_color_map produced
+          # (confirmed live - every track rendered black despite a correct,
+          # correctly-colored legend). Same fix apn's own param.yaml applies
+          # ("get_color/get_fill_color are hidden in the form (set by
+          # colormap); explicit here for make run").
+          layer_style:
+            get_color: column_color
+
+      - id: event_layer
+        task: create_scatterplot_layer
+        partial:
+          geodataframe: ${{ workflow.event_colormap.return }}
+          legend:
+            title: ${{ workflow.event_legend_title.return }}
+            label_column: column_label
+            color_column: column_color
+          data_url: null
+          tooltip_columns:
+            - category
+          # See patrol_track_layer above - same fix, get_fill_color is
+          # ScatterplotLayerStyle's equivalent accessor.
+          layer_style:
+            get_fill_color: column_color
+
+      # Neither view_state_from_layers (the core org task) nor this package's
+      # earlier compute_fitted_view_state (ported from ecoscope-workflows-ext-wd)
+      # account for this map's actual WIDE (1280x720) render aspect ratio or
+      # Mercator latitude distortion - both just fit pydeck's own naive
+      # bbox_to_zoom_level, which assumes a square tile. For a small,
+      # diagonally-elongated track (e.g. one patrol, via Patrol Serial
+      # Number), that clips whichever axis isn't the larger of lat/lng -
+      # confirmed live (see session history). fit_view_to_geodataframes fixes
+      # this with separate per-axis zoom fitting - see its own docstring/
+      # comment block for the full rationale (based on
+      # ICMBio-patrol_analysis's own compute_view_from_geodataframes).
+      - id: activities_view_state
+        task: ecoscope_workflows_ext_belize.tasks.fit_view_to_geodataframes
+        partial:
+          geo_layers:
+            - ${{ workflow.patrol_track_layer.return }}
+            - ${{ workflow.event_layer.return }}
+
+      - id: activities_map
+        task: draw_map
+        partial:
+          geo_layers:
+            - ${{ workflow.patrol_track_layer.return }}
+            - ${{ workflow.event_layer.return }}
+          tile_layers: ${{ workflow.base_maps.return }}
+          static: false
+          title: null
+          view_state: ${{ workflow.activities_view_state.return }}
+          max_zoom: 17
+          legend_style:
+            placement: bottom-right
+          output_type: html
+
+      - id: activities_map_url
+        task: persist_text
+        partial:
+          text: ${{ workflow.activities_map.return }}
+          root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+          filename: activities_map.html
+          filename_suffix: null
+
+      - name: Map of Activities Documented Widget
+        id: activities_map_sv
+        task: create_map_widget_single_view
+        skipif:
+          conditions:
+            - never
+        partial:
+          title: "Map of Activities Documented"
+          data: ${{ workflow.activities_map_url.return }}
+
+  # Same html_to_png config as APN-patrol_event: only full_page is set,
+  # everything else (width/height/device_scale_factor/timeout/
+  # max_concurrent_pages/serve_local_files) uses ScreenshotConfig's own
+  # built-in defaults. In particular wait_for_timeout defaults to 30000ms -
+  # we previously hardcoded 8000ms here, which wasn't always enough time for
+  # this map's basemap tiles + tens of thousands of GPS points to finish
+  # loading before the screenshot was taken (confirmed live: one run produced
+  # a genuinely blank white PNG, which a retry - no code change - fixed).
+  - title: Report Map to PNG
+    type: task-group
+    description: "Convert the map + charts to PNG for the docx report."
+    tasks:
+      - id: activities_map_png
+        task: html_to_png
+        partial:
+          html_path: ${{ workflow.activities_map_url.return }}
+          output_dir: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+          config:
+            full_page: false
+
+      - id: patrols_by_mandate_png
+        task: html_to_png
+        partial:
+          html_path: ${{ workflow.patrols_by_mandate_chart_html.return }}
+          output_dir: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+          config:
+            full_page: false
+
+      - id: vessels_inspected_png
+        task: html_to_png
+        partial:
+          html_path: ${{ workflow.vessels_inspected_chart_html.return }}
+          output_dir: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+          config:
+            full_page: false
+
+  # ---------------------------------------------------------------------------
+  - title: Patrol Report
+    type: task-group
+    description: ""
+    tasks:
+      - id: report_template_path
+        task: set_string_var
+
+      - id: generated_by
+        task: ecoscope_workflows_ext_belize.tasks.get_report_generated_by
+        partial:
+          client: ${{ workflow.er_client.return }}
+
+      - id: patrol_report
+        task: ecoscope_workflows_ext_belize.tasks.generate_belize_patrol_report
+        skipif:
+          conditions:
+            - never
+        partial:
+          template_path: ${{ workflow.report_template_path.return }}
+          output_dir: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+          generated_by: ${{ workflow.generated_by.return }}
+          time_range: ${{ workflow.time_range.return }}
+          patrol_effort_summary: ${{ workflow.patrol_effort_summary.return }}
+          staff_effort: ${{ workflow.staff_effort_renamed.return }}
+          vessels_documented: ${{ workflow.vessels_documented.return }}
+          recreational_fishing_vessels: ${{ workflow.recreational_fishing_vessels.return }}
+          recreational_tourism_vessels: ${{ workflow.recreational_tourism_vessels.return }}
+          commercial_fishing_vessels: ${{ workflow.commercial_fishing_vessels.return }}
+          fishers_documented: ${{ workflow.fishers_documented.return }}
+          patrols_by_mandate_chart_png: ${{ workflow.patrols_by_mandate_png.return }}
+          vessels_inspected_chart_png: ${{ workflow.vessels_inspected_png.return }}
+          activities_map_png: ${{ workflow.activities_map_png.return }}
+          photo_attachment_paths: ${{ workflow.download_attachments.return }}
+          photo_events: ${{ workflow.event_colormap.return }}
+
+  - name: Dashboard
+    id: dashboard
+    task: ecoscope_workflows_ext_belize.tasks.gather_belize_dashboard
+    partial:
+      details: ${{ workflow.workflow_details.return }}
+      widgets:
+        - ${{ workflow.patrol_effort_summary_sv.return }}
+        - ${{ workflow.staff_effort_sv.return }}
+        - ${{ workflow.patrols_by_mandate_sv.return }}
+        - ${{ workflow.vessels_inspected_sv.return }}
+        - ${{ workflow.vessels_documented_sv.return }}
+        - ${{ workflow.recreational_fishing_sv.return }}
+        - ${{ workflow.recreational_tourism_sv.return }}
+        - ${{ workflow.commercial_fishing_vessels_sv.return }}
+        - ${{ workflow.fishers_documented_sv.return }}
+        - ${{ workflow.activities_map_sv.return }}
+      groupers: ${{ workflow.groupers.return }}
+      time_range: ${{ workflow.time_range.return }}
