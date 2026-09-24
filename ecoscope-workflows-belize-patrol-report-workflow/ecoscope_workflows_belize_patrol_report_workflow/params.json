@@ -1,0 +1,697 @@
+{
+  "properties": {
+    "workflow_details": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Workflow Name",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Workflow Description",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object",
+      "description": "Add information that will help to differentiate this workflow from another.",
+      "title": "Workflow Details"
+    },
+    "er_client": {
+      "additionalProperties": false,
+      "properties": {
+        "data_source": {
+          "$ref": "#/$defs/EarthRangerConnection",
+          "title": "",
+          "description": "Select one of your configured data sources."
+        }
+      },
+      "required": [
+        "data_source"
+      ],
+      "type": "object",
+      "title": "Data Source"
+    },
+    "time_range": {
+      "additionalProperties": false,
+      "properties": {
+        "since": {
+          "format": "date-time",
+          "title": "Since",
+          "type": "string",
+          "description": "The start time"
+        },
+        "until": {
+          "format": "date-time",
+          "title": "Until",
+          "type": "string",
+          "description": "The end time"
+        },
+        "timezone": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/TimezoneInfo"
+            }
+          ],
+          "default": null,
+          "title": "Timezone"
+        }
+      },
+      "required": [
+        "since",
+        "until"
+      ],
+      "type": "object",
+      "description": "Choose the period of time to analyze.",
+      "title": "Time Range"
+    },
+    "base_maps": {
+      "additionalProperties": false,
+      "properties": {
+        "base_maps": {
+          "default": [
+            {
+              "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+              "opacity": 1,
+              "max_zoom": 20,
+              "min_zoom": 0
+            },
+            {
+              "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+              "opacity": 0.5,
+              "max_zoom": 20,
+              "min_zoom": 0
+            }
+          ],
+          "items": {
+            "title": "Base Layer",
+            "anyOf": [
+              {
+                "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
+                "properties": {
+                  "url": {
+                    "default": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                    "title": "Preset Layer URL",
+                    "type": "string",
+                    "const": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                    "enum": [
+                      "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    ]
+                  },
+                  "opacity": {
+                    "default": 1,
+                    "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                    "ecoscope:advanced": true,
+                    "maximum": 1.0,
+                    "minimum": 0.0,
+                    "title": "Layer Opacity",
+                    "type": "number"
+                  }
+                },
+                "title": "Open Street Map",
+                "type": "object"
+              },
+              {
+                "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
+                "properties": {
+                  "url": {
+                    "default": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+                    "title": "Preset Layer URL",
+                    "type": "string",
+                    "const": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+                    "enum": [
+                      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
+                    ]
+                  },
+                  "opacity": {
+                    "default": 1,
+                    "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                    "ecoscope:advanced": true,
+                    "maximum": 1.0,
+                    "minimum": 0.0,
+                    "title": "Layer Opacity",
+                    "type": "number"
+                  }
+                },
+                "title": "Roadmap",
+                "type": "object"
+              },
+              {
+                "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
+                "properties": {
+                  "url": {
+                    "default": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+                    "title": "Preset Layer URL",
+                    "type": "string",
+                    "const": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+                    "enum": [
+                      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                    ]
+                  },
+                  "opacity": {
+                    "default": 1,
+                    "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                    "ecoscope:advanced": true,
+                    "maximum": 1.0,
+                    "minimum": 0.0,
+                    "title": "Layer Opacity",
+                    "type": "number"
+                  }
+                },
+                "title": "Satellite",
+                "type": "object"
+              },
+              {
+                "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
+                "properties": {
+                  "url": {
+                    "default": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+                    "title": "Preset Layer URL",
+                    "type": "string",
+                    "const": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+                    "enum": [
+                      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
+                    ]
+                  },
+                  "opacity": {
+                    "default": 1,
+                    "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                    "ecoscope:advanced": true,
+                    "maximum": 1.0,
+                    "minimum": 0.0,
+                    "title": "Layer Opacity",
+                    "type": "number"
+                  }
+                },
+                "title": "Terrain",
+                "type": "object"
+              },
+              {
+                "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
+                "properties": {
+                  "url": {
+                    "default": "https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}",
+                    "title": "Preset Layer URL",
+                    "type": "string",
+                    "const": "https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}",
+                    "enum": [
+                      "https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}"
+                    ]
+                  },
+                  "opacity": {
+                    "default": 1,
+                    "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                    "ecoscope:advanced": true,
+                    "maximum": 1.0,
+                    "minimum": 0.0,
+                    "title": "Layer Opacity",
+                    "type": "number"
+                  }
+                },
+                "title": "USGS Hillshade",
+                "type": "object"
+              },
+              {
+                "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
+                "properties": {
+                  "url": {
+                    "default": "https://example.tiles.com/{z}/{x}/{y}.png",
+                    "description": "The URL of a publicly accessible tiled raster service.",
+                    "pattern": "https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9()@:%_\\+.~#?&//=\\{\\}]*)",
+                    "title": "Custom Layer URL",
+                    "type": "string"
+                  },
+                  "opacity": {
+                    "default": 1,
+                    "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                    "ecoscope:advanced": true,
+                    "maximum": 1.0,
+                    "minimum": 0.0,
+                    "title": "Custom Layer Opacity",
+                    "type": "number"
+                  },
+                  "max_zoom": {
+                    "default": 20,
+                    "description": "Set the maximum zoom level to fetch tiles for.",
+                    "title": "Custom Layer Max Zoom",
+                    "type": "integer"
+                  },
+                  "min_zoom": {
+                    "default": 0,
+                    "description": "Set the minimum zoom level to fetch tiles for.",
+                    "title": "Custom Layer Min Zoom",
+                    "type": "integer"
+                  }
+                },
+                "title": "Custom Layer (Advanced)",
+                "type": "object"
+              }
+            ]
+          },
+          "title": " ",
+          "type": "array",
+          "description": "Select tile layers to use as base layers in map outputs. The first layer in the list will be the bottommost layer displayed.",
+          "ecoscope:advanced": true
+        }
+      },
+      "type": "object",
+      "required": [],
+      "title": "Base Maps"
+    },
+    "patrol_id_filter": {
+      "additionalProperties": false,
+      "properties": {
+        "var": {
+          "title": "",
+          "type": "string"
+        }
+      },
+      "required": [
+        "var"
+      ],
+      "type": "object",
+      "title": "Patrol ID"
+    },
+    "plot_palette": {
+      "additionalProperties": false,
+      "properties": {
+        "colormap": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/QualitativeColormap"
+            }
+          ],
+          "default": "tab20",
+          "title": "Colormap",
+          "description": "Choose a color palette. For low-cardinality data any palette works; for high-cardinality data use tab20, tab20b, or tab20c to reduce color repetition."
+        },
+        "custom_colors": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Custom Colors",
+          "type": "array",
+          "description": "Leave empty to use the palette above. When provided, these colors are applied instead.",
+          "ecoscope:advanced": true
+        }
+      },
+      "type": "object",
+      "required": [],
+      "title": "Chart Color Palette"
+    },
+    "patrol_observations": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "default": [
+            "done"
+          ],
+          "items": {
+            "type": "string",
+            "oneOf": [
+              {
+                "const": "active",
+                "title": "Active"
+              },
+              {
+                "const": "overdue",
+                "title": "Overdue"
+              },
+              {
+                "const": "done",
+                "title": "Done"
+              },
+              {
+                "const": "cancelled",
+                "title": "Cancelled"
+              }
+            ]
+          },
+          "title": "Patrol Status",
+          "type": "array",
+          "description": "Choose to analyze patrols with a certain status. If left empty, patrols of all status will be analyzed",
+          "uniqueItems": true,
+          "ecoscope:advanced": true
+        }
+      },
+      "required": [],
+      "type": "object",
+      "title": ""
+    },
+    "trajs": {
+      "additionalProperties": false,
+      "properties": {
+        "trajectory_segment_filter": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/TrajectorySegmentFilter"
+            }
+          ],
+          "default": {
+            "min_length_meters": 0.001,
+            "max_length_meters": 100000,
+            "min_time_secs": 1,
+            "max_time_secs": 172800,
+            "min_speed_kmhr": 0.01,
+            "max_speed_kmhr": 500
+          },
+          "title": " ",
+          "description": "Filter track data by setting limits on track segment length, duration, and speed. Segments outside these bounds are removed, reducing noise and to focus on meaningful movement patterns.",
+          "ecoscope:advanced": true
+        }
+      },
+      "required": [],
+      "type": "object",
+      "title": "Filter Trajectory"
+    },
+    "track_colormap": {
+      "additionalProperties": false,
+      "properties": {
+        "input_column_name": {
+          "title": "Input Column Name",
+          "type": "string",
+          "description": "The column containing categorical values to color by."
+        },
+        "colormap": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/QualitativeColormap"
+            }
+          ],
+          "default": "tab20b",
+          "title": "Colormap",
+          "description": "Choose a color palette. For low-cardinality data any palette works; for high-cardinality data use tab20, tab20b, or tab20c to reduce color repetition."
+        },
+        "custom_colors": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Custom Colors",
+          "type": "array",
+          "description": "Leave empty to use the palette above. When provided, these colors are applied instead.",
+          "ecoscope:advanced": true
+        }
+      },
+      "required": [
+        "input_column_name"
+      ],
+      "type": "object",
+      "title": ""
+    },
+    "track_legend_title": {
+      "additionalProperties": false,
+      "properties": {
+        "var": {
+          "title": "",
+          "type": "string"
+        }
+      },
+      "required": [
+        "var"
+      ],
+      "type": "object",
+      "title": ""
+    },
+    "event_colormap": {
+      "additionalProperties": false,
+      "properties": {
+        "input_column_name": {
+          "title": "Input Column Name",
+          "type": "string",
+          "description": "The column containing categorical values to color by."
+        },
+        "colormap": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/QualitativeColormap"
+            }
+          ],
+          "default": "tab20b",
+          "title": "Colormap",
+          "description": "Choose a color palette. For low-cardinality data any palette works; for high-cardinality data use tab20, tab20b, or tab20c to reduce color repetition."
+        },
+        "custom_colors": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Custom Colors",
+          "type": "array",
+          "description": "Leave empty to use the palette above. When provided, these colors are applied instead.",
+          "ecoscope:advanced": true
+        }
+      },
+      "required": [
+        "input_column_name"
+      ],
+      "type": "object",
+      "title": ""
+    },
+    "event_legend_title": {
+      "additionalProperties": false,
+      "properties": {
+        "var": {
+          "title": "",
+          "type": "string"
+        }
+      },
+      "required": [
+        "var"
+      ],
+      "type": "object",
+      "title": ""
+    },
+    "download_attachments": {
+      "additionalProperties": false,
+      "properties": {
+        "skip_download": {
+          "default": false,
+          "title": "Skip Download",
+          "type": "boolean",
+          "description": "If True, skip downloading attachments."
+        }
+      },
+      "required": [],
+      "type": "object",
+      "title": "Download Event Attachments"
+    },
+    "activities_view_state": {
+      "additionalProperties": false,
+      "properties": {
+        "padding_fraction": {
+          "default": 0.08,
+          "maximum": 0.4,
+          "minimum": 0.0,
+          "title": "Padding Fraction",
+          "type": "number",
+          "description": "Fraction of the map left as empty margin around the data on each side.",
+          "ecoscope:advanced": true
+        },
+        "outlier_trim_percent": {
+          "default": 1.0,
+          "maximum": 45.0,
+          "minimum": 0.0,
+          "title": "Outlier Trim Percent",
+          "type": "number",
+          "description": "Percentile trimmed from each end of the coordinate range before framing (e.g. 1 uses the 1st-99th percentile). Makes framing robust to a stray bad GPS fix without needing to filter it out of the data itself. Keep this low - a real patrol track's own extremities can span a wide percentile range, so a high value crops legitimate track data out of the frame.",
+          "ecoscope:advanced": true
+        },
+        "max_zoom": {
+          "default": 20.0,
+          "title": "Max Zoom",
+          "type": "number",
+          "description": "Zoom is never fit tighter than this, however small the data's extent.",
+          "ecoscope:advanced": true
+        }
+      },
+      "type": "object",
+      "required": [],
+      "title": ""
+    },
+    "report_template_path": {
+      "additionalProperties": false,
+      "properties": {
+        "var": {
+          "title": "",
+          "type": "string"
+        }
+      },
+      "required": [
+        "var"
+      ],
+      "type": "object",
+      "title": ""
+    }
+  },
+  "$defs": {
+    "EarthRangerConnection": {
+      "properties": {
+        "name": {
+          "title": "Data Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "EarthRangerConnection",
+      "type": "object"
+    },
+    "TimezoneInfo": {
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "tzCode": {
+          "title": "Tzcode",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "utc": {
+          "title": "Utc",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "tzCode",
+        "name",
+        "utc"
+      ],
+      "title": "TimezoneInfo",
+      "type": "object"
+    },
+    "QualitativeColormap": {
+      "enum": [
+        "Pastel1",
+        "Pastel2",
+        "Paired",
+        "Accent",
+        "Dark2",
+        "Set1",
+        "Set2",
+        "Set3",
+        "tab10",
+        "tab20",
+        "tab20b",
+        "tab20c"
+      ],
+      "title": "QualitativeColormap",
+      "type": "string"
+    },
+    "TrajectorySegmentFilter": {
+      "properties": {
+        "min_length_meters": {
+          "default": 0.001,
+          "ecoscope:advanced": true,
+          "minimum": 0.001,
+          "title": "Minimum Segment Length (Meters)",
+          "type": "number"
+        },
+        "max_length_meters": {
+          "default": 100000,
+          "ecoscope:advanced": true,
+          "exclusiveMinimum": 0.001,
+          "title": "Maximum Segment Length (Meters)",
+          "type": "number"
+        },
+        "min_time_secs": {
+          "default": 1,
+          "ecoscope:advanced": true,
+          "minimum": 1,
+          "title": "Minimum Segment Duration (Seconds)",
+          "type": "number"
+        },
+        "max_time_secs": {
+          "default": 172800,
+          "ecoscope:advanced": true,
+          "exclusiveMinimum": 1,
+          "title": "Maximum Segment Duration (Seconds)",
+          "type": "number"
+        },
+        "min_speed_kmhr": {
+          "default": 0.01,
+          "ecoscope:advanced": true,
+          "exclusiveMinimum": 0.001,
+          "title": "Minimum Segment Speed (Kilometers per Hour)",
+          "type": "number"
+        },
+        "max_speed_kmhr": {
+          "default": 500,
+          "ecoscope:advanced": true,
+          "exclusiveMinimum": 0.001,
+          "title": "Maximum Segment Speed (Kilometers per Hour)",
+          "type": "number"
+        }
+      },
+      "title": "TrajectorySegmentFilter",
+      "type": "object"
+    }
+  },
+  "uiSchema": {
+    "workflow_details": {
+      "ui:order": [
+        "name",
+        "description"
+      ]
+    },
+    "time_range": {
+      "ui:order": [
+        "since",
+        "until",
+        "timezone"
+      ]
+    },
+    "plot_palette": {
+      "ui:order": [
+        "colormap",
+        "custom_colors"
+      ]
+    },
+    "track_colormap": {
+      "ui:order": [
+        "input_column_name",
+        "colormap",
+        "custom_colors"
+      ]
+    },
+    "event_colormap": {
+      "ui:order": [
+        "input_column_name",
+        "colormap",
+        "custom_colors"
+      ]
+    },
+    "activities_view_state": {
+      "ui:order": [
+        "padding_fraction",
+        "outlier_trim_percent",
+        "max_zoom"
+      ]
+    },
+    "ui:order": [
+      "workflow_details",
+      "er_client",
+      "time_range",
+      "base_maps",
+      "patrol_id_filter",
+      "plot_palette",
+      "patrol_observations",
+      "trajs",
+      "track_colormap",
+      "track_legend_title",
+      "event_colormap",
+      "event_legend_title",
+      "download_attachments",
+      "activities_view_state",
+      "report_template_path"
+    ]
+  },
+  "additionalProperties": false
+}
