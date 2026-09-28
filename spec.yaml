@@ -14,7 +14,7 @@ requirements:
     channel: conda-forge
 
   - name: ecoscope-workflows-ext-belize
-    version: "0.0.1"
+    version: "0.0.2"
     channel: https://repo.prefix.dev/ecoscope-workflows-custom/
 
 rjsf-overrides:
@@ -723,41 +723,37 @@ workflow:
           df: ${{ workflow.commercial_events_filtered.return }}
           client: ${{ workflow.er_client.return }}
 
-      # dataframe_count (len(df)) is always well-defined, even on an empty
-      # dataframe (0) - this account has no recreational data at all, so
-      # without a never override any_is_empty_df would skip these counts,
-      # cascading via any_dependency_skipped into assemble_vessels_by_category
-      # and assemble_vessels_documented (both take all 3 counts as direct
-      # args), wiping out those two widgets entirely - including the real
-      # commercial fishing count. Confirmed live.
+      # No never override here, matching apn/icmbio/curacao's own bare
+      # dataframe_count convention - a count skips naturally (via
+      # task-instance-defaults) when there's no data of that category at
+      # all. assemble_vessels_by_category/assemble_vessels_documented
+      # (below) absorb that skip themselves, treating it as 0 - confirmed
+      # live (patrol serial numbers 95 and 98, Sep 2026).
       - id: recreational_fishing_count
         task: dataframe_count
-        skipif:
-          conditions:
-            - never
         partial:
           df: ${{ workflow.recreational_fishing_vessels.return }}
 
       - id: recreational_tourism_count
         task: dataframe_count
-        skipif:
-          conditions:
-            - never
         partial:
           df: ${{ workflow.recreational_tourism_vessels.return }}
 
       - id: commercial_fishing_count
         task: dataframe_count
-        skipif:
-          conditions:
-            - never
         partial:
           df: ${{ workflow.commercial_fishing_vessels.return }}
 
       # "subsistence_fishing" left null - see the PRD open question (no
       # matching field exists anywhere for subsistence fishing).
+      # never: this task itself absorbs a skipped count (treating it as 0),
+      # so it must not skip just because one of its 3 count args was itself
+      # skipped - any_dependency_skipped would otherwise still apply here.
       - id: vessels_documented
         task: ecoscope_workflows_ext_belize.tasks.assemble_vessels_documented
+        skipif:
+          conditions:
+            - never
         partial:
           recreational_fishing_count: ${{ workflow.recreational_fishing_count.return }}
           commercial_fishing_count: ${{ workflow.commercial_fishing_count.return }}
@@ -910,8 +906,13 @@ workflow:
       PDF's own chart type (a pie was tried and rejected in favor of matching
       the original).
     tasks:
+      # never: see vessels_documented's own comment - this task absorbs a
+      # skipped count itself, so it must not skip on that same condition.
       - id: vessels_by_category
         task: ecoscope_workflows_ext_belize.tasks.assemble_vessels_by_category
+        skipif:
+          conditions:
+            - never
         partial:
           commercial_fishing_count: ${{ workflow.commercial_fishing_count.return }}
           recreational_fishing_count: ${{ workflow.recreational_fishing_count.return }}
