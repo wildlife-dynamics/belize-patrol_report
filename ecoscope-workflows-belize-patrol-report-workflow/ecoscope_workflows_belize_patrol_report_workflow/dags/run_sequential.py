@@ -31,6 +31,9 @@ from ecoscope.platform.tasks.preprocessing import (
     relocations_to_trajectory as relocations_to_trajectory,
 )
 from ecoscope.platform.tasks.results import (
+    create_files_single_view as create_files_single_view,
+)
+from ecoscope.platform.tasks.results import (
     create_map_widget_single_view as create_map_widget_single_view,
 )
 from ecoscope.platform.tasks.results import create_path_layer as create_path_layer
@@ -2327,6 +2330,23 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
+    patrol_report_file = (
+        task(create_files_single_view)
+        .validate()
+        .set_task_instance_id("patrol_report_file")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(files=patrol_report, **(params.get("patrol_report_file") or {}))
+        .call()
+    )
+
     dashboard = (
         task(gather_belize_dashboard)
         .validate()
@@ -2342,6 +2362,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         )
         .partial(
             details=workflow_details,
+            files=[patrol_report_file],
             widgets=[
                 pes_patrols_sv,
                 pes_distance_sv,

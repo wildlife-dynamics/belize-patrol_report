@@ -3,7 +3,6 @@
 [workspace]
 name = "ecoscope-workflows-belize-patrol-report-workflow"
 channels = [
-    "file:///tmp/ecoscope-workflows-custom/release/artifacts/",
     "https://repo.prefix.dev/ecoscope-workflows-custom/",
     "https://repo.prefix.dev/ecoscope-workflows/",
     "conda-forge",
@@ -30,8 +29,8 @@ version = "==0.9.2"
 channel = "https://conda.anaconda.org/conda-forge/"
 
 [dependencies.ecoscope-workflows-ext-belize]
-version = "==0.0.2"
-channel = "file:///tmp/ecoscope-workflows-custom/release/artifacts/"
+version = "==0.0.3"
+channel = "https://repo.prefix.dev/ecoscope-workflows-custom/"
 
 [dependencies.click]
 version = ">=8.0.0,<9.0.0"
@@ -151,5 +150,5 @@ solve-group = "test"
 no-default-feature = true
 
 [tasks]
-docker-build = "mkdir -p .tmp/ecoscope-workflows/release/artifacts/ &&\ncp -r /tmp/ecoscope-workflows/release/artifacts/* .tmp/ecoscope-workflows/release/artifacts/ &&\ndocker buildx build -t ecoscope-workflows-belize-patrol-report-workflow .\n"
+docker-build = "docker buildx build -t ecoscope-workflows-belize-patrol-report-workflow ."
 ecoscope-workflows-belize-patrol-report-workflow = "python -m ecoscope_workflows_belize_patrol_report_workflow.cli"
