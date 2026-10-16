@@ -156,6 +156,9 @@ get_report_generated_by = create_func_magicmock(  # 🧪
     anchor="ecoscope_workflows_ext_belize.tasks",  # 🧪
     func_name="get_report_generated_by",  # 🧪
 )  # 🧪
+from ecoscope.platform.tasks.results import (
+    create_files_single_view as create_files_single_view,
+)
 from ecoscope_workflows_ext_belize.tasks import (
     gather_belize_dashboard as gather_belize_dashboard,
 )
@@ -217,7 +220,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(time_format="%b %-d, %Y %-I:%M %p", **(params.get("time_range") or {}))
+        .partial(time_format="%d %b %Y %H:%M:%S", **(params.get("time_range") or {}))
         .call()
     )
 
@@ -2367,6 +2370,23 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
+    patrol_report_file = (
+        task(create_files_single_view)
+        .validate()
+        .set_task_instance_id("patrol_report_file")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(files=patrol_report, **(params.get("patrol_report_file") or {}))
+        .call()
+    )
+
     dashboard = (
         task(gather_belize_dashboard)
         .validate()
@@ -2382,6 +2402,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         )
         .partial(
             details=workflow_details,
+            files=[patrol_report_file],
             widgets=[
                 pes_patrols_sv,
                 pes_distance_sv,
