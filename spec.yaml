@@ -118,7 +118,15 @@ workflow:
     id: time_range
     task: set_time_range
     partial:
-      time_format: "%b %-d, %Y %-I:%M %p"
+      # %-d/%-I (no leading zero) are glibc/macOS-only strftime extensions -
+      # Windows' strftime raises ValueError: Invalid format string on them
+      # (this value feeds the dashboard's own time-range display directly
+      # via time_range.since.strftime(time_range.time_format), with no
+      # try/except around it - confirmed in ecoscope's own _dashboard.py).
+      # Matches every other org workflow's own time_format convention -
+      # apn/icmbio/curacao/wildaid/etc. all use this exact zero-padded,
+      # 24-hour format; belize was the only outlier.
+      time_format: "%d %b %Y %H:%M:%S"
 
   - id: get_timezone
     task: get_timezone_from_time_range
