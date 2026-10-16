@@ -14,7 +14,7 @@ requirements:
     channel: conda-forge
 
   - name: ecoscope-workflows-ext-belize
-    version: "0.0.2"
+    version: "0.0.3"
     channel: https://repo.prefix.dev/ecoscope-workflows-custom/
 
 rjsf-overrides:
