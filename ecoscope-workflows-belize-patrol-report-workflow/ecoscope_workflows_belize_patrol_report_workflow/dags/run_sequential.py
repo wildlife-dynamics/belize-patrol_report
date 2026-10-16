@@ -177,7 +177,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(time_format="%b %-d, %Y %-I:%M %p", **(params.get("time_range") or {}))
+        .partial(time_format="%d %b %Y %H:%M:%S", **(params.get("time_range") or {}))
         .call()
     )
 
