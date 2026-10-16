@@ -1231,11 +1231,22 @@ workflow:
           photo_attachment_paths: ${{ workflow.download_attachments.return }}
           photo_events: ${{ workflow.event_colormap.return }}
 
+      # Lets the docx report show up in ecoscope-desktop's own Files tab -
+      # matches incidents_reports' own create_files_single_view + the
+      # dashboard's files: usage below. patrol_report's own skipif: never
+      # means this always has a real path to wrap, never a skip.
+      - id: patrol_report_file
+        task: create_files_single_view
+        partial:
+          files: ${{ workflow.patrol_report.return }}
+
   - name: Dashboard
     id: dashboard
     task: ecoscope_workflows_ext_belize.tasks.gather_belize_dashboard
     partial:
       details: ${{ workflow.workflow_details.return }}
+      files:
+        - ${{ workflow.patrol_report_file.return }}
       widgets:
         - ${{ workflow.pes_patrols_sv.return }}
         - ${{ workflow.pes_distance_sv.return }}
