@@ -1240,9 +1240,16 @@ workflow:
         partial:
           files: ${{ workflow.patrol_report.return }}
 
+  # Plain core gather_dashboard, not the custom gather_belize_dashboard
+  # wrapper - that wrapper's synthetic AllGrouper key (injected to keep
+  # Edit Layout visible when there are no real groupers) combined with a
+  # populated files list crashed ecoscope-desktop's frontend ("n.some is
+  # not a function"). incidents_reports calls gather_dashboard directly
+  # (no synthetic key) and already combines stat widgets with files: fine -
+  # matching that exact convention here instead.
   - name: Dashboard
     id: dashboard
-    task: ecoscope_workflows_ext_belize.tasks.gather_belize_dashboard
+    task: gather_dashboard
     partial:
       details: ${{ workflow.workflow_details.return }}
       files:

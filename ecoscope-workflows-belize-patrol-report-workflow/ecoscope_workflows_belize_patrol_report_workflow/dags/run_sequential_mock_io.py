@@ -159,9 +159,7 @@ get_report_generated_by = create_func_magicmock(  # 🧪
 from ecoscope.platform.tasks.results import (
     create_files_single_view as create_files_single_view,
 )
-from ecoscope_workflows_ext_belize.tasks import (
-    gather_belize_dashboard as gather_belize_dashboard,
-)
+from ecoscope.platform.tasks.results import gather_dashboard as gather_dashboard
 from ecoscope_workflows_ext_belize.tasks import (
     generate_belize_patrol_report as generate_belize_patrol_report,
 )
@@ -2388,7 +2386,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
     )
 
     dashboard = (
-        task(gather_belize_dashboard)
+        task(gather_dashboard)
         .validate()
         .set_task_instance_id("dashboard")
         .handle_errors()
