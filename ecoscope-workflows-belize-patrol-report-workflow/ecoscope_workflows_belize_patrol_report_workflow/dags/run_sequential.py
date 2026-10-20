@@ -48,6 +48,7 @@ from ecoscope.platform.tasks.results import (
 )
 from ecoscope.platform.tasks.results import draw_map as draw_map
 from ecoscope.platform.tasks.results import draw_table as draw_table
+from ecoscope.platform.tasks.results import gather_dashboard as gather_dashboard
 from ecoscope.platform.tasks.results import set_base_maps as set_base_maps
 from ecoscope.platform.tasks.skip import (
     any_dependency_skipped as any_dependency_skipped,
@@ -99,9 +100,6 @@ from ecoscope_workflows_ext_belize.tasks import (
 )
 from ecoscope_workflows_ext_belize.tasks import (
     flatten_commercial_fishing_vessels as flatten_commercial_fishing_vessels,
-)
-from ecoscope_workflows_ext_belize.tasks import (
-    gather_belize_dashboard as gather_belize_dashboard,
 )
 from ecoscope_workflows_ext_belize.tasks import (
     generate_belize_patrol_report as generate_belize_patrol_report,
@@ -2348,7 +2346,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
     )
 
     dashboard = (
-        task(gather_belize_dashboard)
+        task(gather_dashboard)
         .validate()
         .set_task_instance_id("dashboard")
         .handle_errors()
